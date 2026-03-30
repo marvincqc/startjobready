@@ -3,10 +3,13 @@
 const PDFDocument = require("pdfkit");
 const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// Create client lazily inside function so missing env vars don't crash on startup
+function getSupabase() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables.");
+  }
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+}
 
 function buildPDF(d) {
   return new Promise((resolve, reject) => {
@@ -111,6 +114,8 @@ function buildPDF(d) {
 }
 
 async function generateAndStorePDF(data, submissionId) {
+  const supabase = getSupabase();
+
   const pdfBuffer = await buildPDF(data);
 
   const safeName   = (data.name   ?? "unknown").replace(/[^a-z0-9]/gi, "_").toLowerCase();
