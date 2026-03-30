@@ -769,6 +769,7 @@ async function handleScan() {
       if (json.data.dob) data.dob = json.data.dob;
       if (json.data.nationality) data.nationality = json.data.nationality;
       if (json.data.passportNumber) data.passportNumber = json.data.passportNumber;
+      if (json.photoUrl) data.passportPhotoUrl = json.photoUrl; 
 
       // Move to next step (the fields will be shown pre-filled)
       advance();
