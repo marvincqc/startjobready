@@ -16,7 +16,7 @@ app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 // ─── Privacy policy ───────────────────────────────────────────────────────────
 app.get("/privacy", (_req, res) =>
-  res.sendFile(path.join(__dirname, "../public/privacy.html"))
+res.sendFile(path.join(__dirname, "../privacy.html"))
 );
 
 // ─── Submit resume ─────────────────────────────────────────────────────────────
