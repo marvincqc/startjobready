@@ -2,14 +2,18 @@
   "name": "startjobready",
   "version": "1.0.0",
   "description": "Web-based resume builder for foreign workers applying to Singapore jobs",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.4",
     "express": "^4.19.2",
-    "pdfkit": "^0.15.0"
+    "pdfkit": "^0.15.0",
+    "multer": "^1.4.5-lts.1",
+    "tesseract.js": "^5.0.5",
+    "sharp": "^0.33.4",
+    "mrz": "^3.1.0"
   },
   "engines": {
     "node": ">=18.0.0"
