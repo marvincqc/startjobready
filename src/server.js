@@ -8,7 +8,7 @@ const { generateAndStorePDF } = require("./pdf");
 const app = express();
 
 // ─── Serve public folder ───────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "..")));
 app.use(express.json());
 
 // ─── Health check ─────────────────────────────────────────────────────────────
