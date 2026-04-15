@@ -7,24 +7,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #f4efe6;
-  --bg-accent: #fce8d2;
-  --card: rgba(255, 255, 255, 0.84);
-  --card-strong: rgba(255, 255, 255, 0.92);
-  --accent: #be4f2f;
-  --accent-dark: #963918;
+  --bg: #ede5d8;
+  --bg-accent: #fff0e3;
+  --card: rgba(255, 252, 247, 0.9);
+  --card-strong: rgba(255, 255, 255, 0.97);
+  --accent: #c85e38;
+  --accent-dark: #943b1d;
   --accent-light: #fff0e3;
-  --ink: #15202b;
-  --text: #15202b;
-  --muted: #556475;
-  --border: rgba(21, 32, 43, 0.12);
-  --success: #1f5f58;
-  --success-light: #e7f3f1;
+  --ink: #13202b;
+  --text: #13202b;
+  --muted: #62717f;
+  --border: rgba(19, 32, 43, 0.12);
+  --success: #2c766d;
+  --success-light: #e5f3f0;
   --error: #c2410c;
   --error-light: #fff1eb;
   --radius: 20px;
-  --radius-lg: 28px;
-  --shadow: 0 24px 60px rgba(30, 35, 40, 0.14);
+  --radius-lg: 32px;
+  --shadow: 0 28px 90px rgba(12, 18, 24, 0.18);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,9 +37,9 @@ body {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(circle at top left, rgba(190, 79, 47, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(31, 95, 88, 0.12), transparent 24%),
-    linear-gradient(180deg, #f8f2ea 0%, #efe8dc 100%);
+    radial-gradient(circle at top left, rgba(200, 94, 56, 0.16), transparent 24%),
+    radial-gradient(circle at top right, rgba(44, 118, 109, 0.12), transparent 22%),
+    linear-gradient(180deg, #0e171e 0, #13212b 28rem, #efe7da 28rem, #ede5d8 100%);
 }
 
 .shell {
@@ -49,12 +49,12 @@ body {
 
 /* ── Header ── */
 .header {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px);
   border-radius: var(--radius-lg);
-  padding: 18px 20px;
+  padding: 18px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -71,29 +71,32 @@ body {
 .logo-icon {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, var(--accent) 0%, #db7a49 100%);
-  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, #ea8b57 100%);
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-size: 17px;
   font-weight: 800;
-  box-shadow: 0 14px 30px rgba(190, 79, 47, 0.24);
+  box-shadow: 0 18px 36px rgba(200, 94, 56, 0.28);
 }
-.logo-name { font-weight: 800; font-size: 18px; letter-spacing: -0.03em; }
+.logo-name { font-weight: 800; font-size: 18px; letter-spacing: -0.03em; color: #fff; }
 .lang-select {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   padding: 0 14px;
   min-height: 42px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
-  color: var(--text);
+  color: #fff;
   cursor: pointer;
   outline: none;
+}
+.lang-select option {
+  color: var(--text);
 }
 .header-actions {
   display: flex;
@@ -109,9 +112,9 @@ body {
   min-height: 42px;
   padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.82);
-  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
@@ -119,29 +122,29 @@ body {
 }
 .page-link:hover {
   transform: translateY(-1px);
-  border-color: rgba(21, 32, 43, 0.22);
+  background: rgba(255, 255, 255, 0.1);
 }
 .page-link.reset-link {
-  background: var(--accent-light);
-  border-color: rgba(190, 79, 47, 0.22);
-  color: var(--accent-dark);
+  background: rgba(255, 240, 227, 0.12);
+  border-color: rgba(255, 240, 227, 0.18);
+  color: #ffd6c5;
 }
 .import-btn {
-  background: var(--ink);
-  border: 1px solid var(--ink);
+  background: #fff;
+  border: 1px solid #fff;
   border-radius: 999px;
   padding: 0 16px;
   min-height: 42px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 800;
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
   transition: all 0.18s ease;
 }
 .import-btn:hover {
-  background: #263240;
-  border-color: #263240;
+  background: #f8ede6;
+  border-color: #f8ede6;
   transform: translateY(-1px);
 }
 .import-btn:disabled {
@@ -151,31 +154,31 @@ body {
 
 /* ── Progress ── */
 .progress-wrap {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 14px 18px;
+  backdrop-filter: blur(14px);
+  border-radius: 24px;
+  padding: 16px 18px;
   margin: 14px 0 14px;
 }
 .progress-info {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.68);
   margin-bottom: 8px;
   font-weight: 700;
 }
 .progress-bar {
   height: 8px;
-  background: rgba(21, 32, 43, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 99px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent) 0%, #ea8b57 100%);
   border-radius: 99px;
   transition: width 0.4s ease;
 }
@@ -183,8 +186,8 @@ body {
   display: none;
   margin: 0 auto 12px;
   padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(190, 79, 47, 0.18);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 240, 227, 0.16);
   background: rgba(255, 240, 227, 0.92);
   color: var(--accent-dark);
   font-size: 14px;
@@ -203,27 +206,147 @@ body {
   color: var(--success);
 }
 
+.builder-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 18px;
+  align-items: stretch;
+  margin: 18px 0 14px;
+}
+
+.builder-copy,
+.builder-side {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow);
+}
+
+.builder-copy {
+  padding: 28px 30px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  color: #fff;
+}
+
+.builder-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 240, 227, 0.12);
+  border: 1px solid rgba(255, 240, 227, 0.12);
+  color: #ffd7c7;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.builder-copy h1 {
+  margin-top: 16px;
+  font-family: "Fraunces", serif;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  max-width: 11ch;
+}
+
+.builder-copy p {
+  margin-top: 16px;
+  max-width: 34rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.builder-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.builder-link.ghost {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.builder-side {
+  padding: 24px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 244, 0.84));
+}
+
+.builder-side-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.builder-highlights {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.builder-highlight {
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(19, 32, 43, 0.08);
+}
+
+.builder-highlight strong {
+  display: block;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+
+.builder-highlight span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
 /* ── Main ── */
 main {
   flex: 1;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 6px 0 80px;
+  padding: 10px 0 68px;
 }
 
 .wizard {
   width: 100%;
-  max-width: 720px;
+  max-width: 820px;
 }
 
 /* ── Step card ── */
 .step-card {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.78));
-  border: 1px solid rgba(255, 255, 255, 0.78);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 244, 0.84));
+  border: 1px solid rgba(255, 255, 255, 0.84);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 38px 36px;
+  padding: 40px 38px;
   animation: fadeUp 0.3s ease;
   display: none;
   position: relative;
@@ -236,7 +359,7 @@ main {
   width: 240px;
   height: 240px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(190, 79, 47, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(200, 94, 56, 0.12) 0%, transparent 70%);
   pointer-events: none;
 }
 .step-card.active { display: block; }
@@ -250,11 +373,11 @@ main {
   width: 58px;
   height: 58px;
   background: var(--accent-light);
-  border-radius: 18px;
+  border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
   font-size: 24px;
   margin-bottom: 20px;
-  border: 1px solid rgba(190, 79, 47, 0.14);
+  border: 1px solid rgba(200, 94, 56, 0.14);
 }
 .step-label {
   font-size: 11px;
@@ -285,14 +408,14 @@ main {
 .field {
   width: 100%;
   border: 1.5px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 15px 18px;
   font-family: inherit;
   font-size: 15px;
   color: var(--text);
   outline: none;
   transition: border-color 0.15s;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
 }
 .field:focus {
   border-color: rgba(190, 79, 47, 0.36);
@@ -310,8 +433,8 @@ main {
 .field-error.show { display: block; }
 .upload-zone {
   border: 1.5px dashed var(--border);
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.78) 100%);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 250, 244, 0.82) 100%);
   padding: 24px;
   transition: all 0.15s ease;
   cursor: pointer;
@@ -456,9 +579,9 @@ main {
 .opts-grid.single { grid-template-columns: 1fr; }
 
 .opt-btn {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   border: 1.5px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 14px 16px;
   font-family: inherit;
   font-size: 14px;
@@ -503,9 +626,9 @@ main {
 }
 .btn-back {
   flex: 0 0 auto;
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.92);
   border: 1.5px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 15px 20px;
   font-family: inherit;
   font-size: 15px;
@@ -519,7 +642,7 @@ main {
   flex: 1;
   background: var(--accent);
   border: none;
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 15px;
   font-family: inherit;
   font-size: 15px;
@@ -565,7 +688,7 @@ main {
   width: 100%;
   background: var(--success);
   border: none;
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 16px;
   font-family: inherit;
   font-size: 16px;
@@ -610,7 +733,7 @@ main {
   align-items: center;
   justify-content: center;
   padding: 13px 16px;
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--accent);
   color: #fff;
   font-size: 14px;
@@ -630,7 +753,7 @@ main {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(244, 239, 230, 0.76);
+  background: rgba(14, 23, 30, 0.62);
   backdrop-filter: blur(8px);
   z-index: 200;
   align-items: center;
@@ -647,7 +770,85 @@ main {
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-msg { font-size: 15px; font-weight: 500; color: var(--muted); }
+.loading-msg { font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, 0.76); }
+
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  margin-bottom: 34px;
+  padding: 32px 28px 34px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #14212b 0%, #1b2e39 48%, #2b4a4c 100%);
+  box-shadow: var(--shadow);
+}
+
+.site-footer::before {
+  content: "JOBREADY";
+  position: absolute;
+  inset: auto 0 40px;
+  text-align: center;
+  font-size: clamp(4rem, 15vw, 12rem);
+  font-weight: 800;
+  letter-spacing: -0.12em;
+  color: rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.site-footer-inner {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.site-footer-brand {
+  max-width: 26rem;
+}
+
+.site-footer-brand p {
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.site-footer-meta {
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 13px;
+}
+
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.site-footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 920px) {
+  .builder-intro {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 480px) {
   .step-card { padding: 24px 20px; }
@@ -665,8 +866,24 @@ main {
   .shell {
     width: min(100% - 24px, 1180px);
   }
-  .header-actions { width: 100%; }
+  .builder-intro {
+    gap: 14px;
+    margin: 14px 0 12px;
+  }
+  .builder-copy,
+  .builder-side,
+  .site-footer {
+    padding: 20px;
+  }
+  .builder-copy p {
+    font-size: 14px;
+  }
+  .header-actions,
+  .builder-actions,
+  .site-footer-nav { width: 100%; }
   .page-link,
+  .builder-link,
+  .site-footer-nav a,
   .import-btn,
   .lang-select {
     width: 100%;
@@ -707,9 +924,60 @@ main {
 
   <div class="ocr-status" id="ocrStatus"></div>
 
+  <section class="builder-intro">
+    <div class="builder-copy">
+      <div class="builder-eyebrow">Resume intake workflow</div>
+      <h1>One guided builder for resume data, documents, and delivery.</h1>
+      <p>
+        Import a previous resume with free browser OCR, finish the intake, attach supporting files, and submit one clean packet.
+      </p>
+      <div class="builder-actions">
+        <a class="builder-link" href="/">Back Home</a>
+        <a class="builder-link ghost" href="/privacy">How data is handled</a>
+      </div>
+    </div>
+
+    <aside class="builder-side">
+      <div class="builder-side-label">Inside this flow</div>
+      <div class="builder-highlights">
+        <div class="builder-highlight">
+          <strong>Import</strong>
+          <span>Use OCR on an older resume image before continuing with the guided fields.</span>
+        </div>
+        <div class="builder-highlight">
+          <strong>Attach</strong>
+          <span>Add passports, certificates, licences, and extra files before final submission.</span>
+        </div>
+        <div class="builder-highlight">
+          <strong>Mirror</strong>
+          <span>Every finished packet can exist as both a local repo output and a mirrored cloud copy.</span>
+        </div>
+      </div>
+    </aside>
+  </section>
+
   <main>
     <div class="wizard" id="wizard"></div>
   </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-brand">
+        <a class="logo" href="/">
+          <div class="logo-icon">JR</div>
+          <div class="logo-name">JobReady</div>
+        </a>
+        <p>JobReady handles resume intake, document collection, PDF generation, and storage mirroring for Singapore agency submissions.</p>
+        <div class="site-footer-meta">© 2026 JobReady • Resume Builder</div>
+      </div>
+      <nav class="site-footer-nav">
+        <a href="/">Home</a>
+        <a href="/resume">Resume Builder</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/?reset=1" onclick="return resetToHome(event)">Reset Draft</a>
+      </nav>
+    </div>
+  </footer>
 </div>
 
 <div class="loading" id="loading">
