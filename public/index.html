@@ -1166,6 +1166,21 @@ function readPartnerContext() {
 }
 
 const PARTNER_CONTEXT = readPartnerContext();
+
+// Gate: block access if no agency param (must arrive via a partner link)
+if (!PARTNER_CONTEXT.agency) {
+  document.body.innerHTML = `
+    <div style="font-family:'Plus Jakarta Sans',sans-serif;background:#f5f2ec;color:#0d1b27;margin:0;display:grid;place-items:center;min-height:100vh;padding:24px;">
+      <div style="max-width:520px;background:#fff;border-radius:24px;padding:40px 36px;box-shadow:0 24px 60px rgba(12,18,24,0.12);text-align:center;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#fff0e3;display:grid;place-items:center;margin:0 auto 20px;font-size:24px;">🔗</div>
+        <h1 style="font-family:'Fraunces',serif;font-size:28px;letter-spacing:-0.03em;margin-bottom:12px;">You need an agency link</h1>
+        <p style="font-size:15px;line-height:1.75;color:#7a8a96;margin-bottom:24px;">This application form is only accessible through a link provided by your manpower agency. Please use the link that was sent to you.</p>
+        <a href="/" style="display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 24px;border-radius:999px;background:#c85e38;color:#fff;font-size:15px;font-weight:700;text-decoration:none;">Go to JobReady Home</a>
+      </div>
+    </div>`;
+  throw new Error("No agency param — page blocked.");
+}
+
 const EXTRA_FIELD_META = {
   agency: { label: "Singapore agency", ic: "🏬" },
   partnerAgency: { label: "Overseas partner", ic: "🤝" },

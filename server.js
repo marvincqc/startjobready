@@ -9,8 +9,15 @@ const { Readable } = require("stream");
 const { pipeline } = require("stream/promises");
 require("dotenv").config();
 
+const { createClient } = require("@supabase/supabase-js");
 const { generateAndStorePDF } = require("./src/pdf");
 const packageInfo = require("./package.json");
+
+// Supabase admin client (service role for server-side inserts + JWT validation)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+);
 
 const app = express();
 const rootDir = __dirname;
@@ -191,22 +198,72 @@ async function readSubmissionInput(req) {
   };
 }
 
+// ─── Auth middleware ──────────────────────────────────────────────────────────
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers["authorization"] || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!token) return res.status(401).json({ ok: false, error: "Unauthorized" });
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ ok: false, error: "Unauthorized" });
+
+  req.user = user;
+  next();
+}
+
+const SUPER_ADMIN = "marvincqc@gmail.com";
+
 // ─── Health check (used by cron keepalive) ────────────────────────────────────
 app.get("/health", (_req, res) => res.json({ status: "ok", ...getDeploymentMeta() }));
 
 // ─── Main pages ───────────────────────────────────────────────────────────────
 app.get("/", (_req, res) => res.sendFile(path.join(rootDir, "public", "home.html")));
 app.get("/resume", (_req, res) => res.sendFile(path.join(rootDir, "public", "index.html")));
-app.get("/apply/:slug", (req, res) => {
+app.get("/apply/:slug", async (req, res) => {
   const slug = normalizeAgencyLinkSlug(req.params.slug);
-  const link = readAgencyLinks().find(item => item.slug === slug);
-  if (!link) {
-    return res.status(404).type("html").send(`<!DOCTYPE html>
+
+  // 1. Check Supabase partner_links first
+  const { data: dbLink } = await supabase
+    .from("partner_links")
+    .select("*, agencies(slug, name)")
+    .eq("full_slug", slug)
+    .maybeSingle();
+
+  if (dbLink) {
+    if (!dbLink.active) {
+      return res.status(410).type("html").send(linkErrorPage(
+        "This link has been deactivated",
+        "This application link is no longer active. Please contact your agency for an updated link."
+      ));
+    }
+    const params = new URLSearchParams();
+    params.set("agency", dbLink.agencies.slug);
+    params.set("partnerLinkCode", dbLink.full_slug);
+    params.set("partnerLinkId", dbLink.id);
+    if (dbLink.partner_name) params.set("partnerAgency", dbLink.partner_name);
+    if (dbLink.partner_country) params.set("partnerCountry", dbLink.partner_country);
+    if (dbLink.lock_agency) params.set("lockAgency", "1");
+    return res.redirect(`/resume?${params.toString()}`);
+  }
+
+  // 2. Fall back to legacy agency-links.json
+  const legacyLink = readAgencyLinks().find(item => item.slug === slug);
+  if (legacyLink) return res.redirect(buildPartnerResumeUrl(legacyLink));
+
+  // 3. Not found
+  return res.status(404).type("html").send(linkErrorPage(
+    "Partner link not found",
+    "This application link is not active or may have been typed incorrectly. Please ask your agency for the correct JobReady link."
+  ));
+});
+
+function linkErrorPage(title, message) {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Link Not Found — JobReady</title>
+  <title>${title} — JobReady</title>
   <style>
     body { font-family: Arial, sans-serif; background:#f4efe6; color:#13202b; margin:0; display:grid; place-items:center; min-height:100vh; padding:24px; }
     .card { max-width:560px; background:#fff; border-radius:24px; padding:32px; box-shadow:0 24px 60px rgba(12,18,24,0.14); }
@@ -217,19 +274,202 @@ app.get("/apply/:slug", (req, res) => {
 </head>
 <body>
   <div class="card">
-    <h1>Partner link not found</h1>
-    <p>This application link is not active or may have been typed incorrectly. Please ask your agency for the correct JobReady link.</p>
+    <h1>${title}</h1>
+    <p>${message}</p>
     <a href="/">Go to JobReady Home</a>
   </div>
 </body>
-</html>`);
-  }
-
-  return res.redirect(buildPartnerResumeUrl(link));
-});
+</html>`;
+}
 
 // ─── Privacy policy ───────────────────────────────────────────────────────────
 app.get("/privacy", (_req, res) => res.sendFile(path.join(rootDir, "public", "privacy.html")));
+
+// ─── Auth pages ───────────────────────────────────────────────────────────────
+app.get("/register", (_req, res) => res.sendFile(path.join(rootDir, "public", "register.html")));
+app.get("/login",    (_req, res) => res.sendFile(path.join(rootDir, "public", "login.html")));
+app.get("/dashboard",(_req, res) => res.sendFile(path.join(rootDir, "public", "dashboard.html")));
+
+// ─── Supabase public config (safe to expose) ──────────────────────────────────
+app.get("/config.js", (_req, res) => {
+  res.type("application/javascript").send(
+    `window.SUPABASE_URL = ${JSON.stringify(process.env.SUPABASE_URL || "")};\n` +
+    `window.SUPABASE_ANON_KEY = ${JSON.stringify(process.env.SUPABASE_ANON_KEY || "")};\n`
+  );
+});
+
+// ─── Agency setup (called once after first sign-in) ───────────────────────────
+app.post("/api/agency/setup", requireAuth, async (req, res) => {
+  const { name, slug } = req.body || {};
+  if (!name || !slug) return res.status(400).json({ ok: false, error: "name and slug required" });
+
+  const cleanSlug = normalizeAgencyLinkSlug(slug);
+  if (!cleanSlug) return res.status(400).json({ ok: false, error: "Invalid slug" });
+
+  // Check if agency already exists for this auth user
+  const { data: existing } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+
+  if (existing) return res.json({ ok: true, agency: existing });
+
+  const { data: agency, error } = await supabase
+    .from("agencies")
+    .insert({ auth_id: req.user.id, name, slug: cleanSlug, contact_email: req.user.email })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === "23505") return res.status(409).json({ ok: false, error: "Slug already taken. Choose another." });
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+
+  res.json({ ok: true, agency });
+});
+
+// ─── Agency profile ───────────────────────────────────────────────────────────
+app.get("/api/agency/me", requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("agencies")
+    .select("*")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  res.json({ ok: true, agency: data });
+});
+
+// ─── Partner links ────────────────────────────────────────────────────────────
+app.get("/api/links", requireAuth, async (req, res) => {
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+
+  if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
+
+  const { data, error } = await supabase
+    .from("partner_links")
+    .select("*")
+    .eq("agency_id", agency.id)
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  res.json({ ok: true, links: data });
+});
+
+app.post("/api/links", requireAuth, async (req, res) => {
+  const { partner_name, partner_country, code } = req.body || {};
+  if (!partner_name || !code) return res.status(400).json({ ok: false, error: "partner_name and code required" });
+
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id, slug")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+
+  if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
+
+  const cleanCode = normalizeAgencyLinkSlug(code);
+  const fullSlug = `${agency.slug}-${cleanCode}`;
+
+  const { data, error } = await supabase
+    .from("partner_links")
+    .insert({ agency_id: agency.id, partner_name, partner_country: partner_country || null, code: cleanCode, full_slug: fullSlug })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === "23505") return res.status(409).json({ ok: false, error: "A link with that code already exists for your agency." });
+    return res.status(500).json({ ok: false, error: error.message });
+  }
+
+  res.json({ ok: true, link: data });
+});
+
+app.patch("/api/links/:id", requireAuth, async (req, res) => {
+  const { active } = req.body || {};
+  if (typeof active !== "boolean") return res.status(400).json({ ok: false, error: "active (boolean) required" });
+
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+
+  if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
+
+  const { data, error } = await supabase
+    .from("partner_links")
+    .update({ active })
+    .eq("id", req.params.id)
+    .eq("agency_id", agency.id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  res.json({ ok: true, link: data });
+});
+
+// ─── Submissions ──────────────────────────────────────────────────────────────
+app.get("/api/submissions", requireAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+  const cursor = req.query.cursor || null; // ISO timestamp of last item
+
+  const isAdmin = req.user.email === SUPER_ADMIN;
+
+  let query = supabase
+    .from("submissions")
+    .select("id, worker_name, nationality, job_type, attachment_count, created_at, agency_id, partner_link_id")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (!isAdmin) {
+    const { data: agency } = await supabase
+      .from("agencies")
+      .select("id")
+      .eq("auth_id", req.user.id)
+      .maybeSingle();
+    if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
+    query = query.eq("agency_id", agency.id);
+  }
+
+  if (cursor) query = query.lt("created_at", cursor);
+
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+
+  const nextCursor = data.length === limit ? data[data.length - 1].created_at : null;
+  res.json({ ok: true, submissions: data, nextCursor });
+});
+
+app.get("/api/submissions/:id", requireAuth, async (req, res) => {
+  const isAdmin = req.user.email === SUPER_ADMIN;
+
+  let query = supabase
+    .from("submissions")
+    .select("*")
+    .eq("id", req.params.id);
+
+  if (!isAdmin) {
+    const { data: agency } = await supabase
+      .from("agencies")
+      .select("id")
+      .eq("auth_id", req.user.id)
+      .maybeSingle();
+    if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
+    query = query.eq("agency_id", agency.id);
+  }
+
+  const { data, error } = await query.maybeSingle();
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  if (!data) return res.status(404).json({ ok: false, error: "Not found" });
+
+  res.json({ ok: true, submission: data });
+});
 
 // Passport OCR was moved to the browser. Keep this route non-fatal for stale clients.
 app.all("/ocr-passport", (_req, res) => {
@@ -260,6 +500,35 @@ app.post("/submit", async (req, res) => {
     if (result.mirrorError) {
       console.warn(`Mirror note for ${submissionId}: ${result.mirrorError}`);
     }
+
+    // Save submission record to Supabase
+    try {
+      let agencyId = null;
+      let partnerLinkId = data.partnerLinkId || null;
+
+      if (data.agency) {
+        const { data: agencyRow } = await supabase
+          .from("agencies")
+          .select("id")
+          .eq("slug", normalizeAgencyLinkSlug(data.agency))
+          .maybeSingle();
+        if (agencyRow) agencyId = agencyRow.id;
+      }
+
+      await supabase.from("submissions").insert({
+        agency_id: agencyId,
+        partner_link_id: partnerLinkId || null,
+        worker_name: data.name || null,
+        nationality: data.nationality || null,
+        job_type: data.jobType || data.job_type || null,
+        data,
+        pdf_path: result.pdfPath || null,
+        attachment_count: result.attachmentCount || 0,
+      });
+    } catch (dbErr) {
+      console.warn("Supabase submission record error (non-fatal):", dbErr.message);
+    }
+
     res.json({
       ok: true,
       attachmentCount: result.attachmentCount,
