@@ -6,666 +6,473 @@
 <title>Privacy Policy — JobReady</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+
 :root {
-  --bg: #ede5d8;
-  --surface: rgba(255, 252, 247, 0.9);
-  --surface-strong: rgba(255, 255, 255, 0.96);
-  --ink: #13202b;
-  --muted: #62717f;
-  --line: rgba(19, 32, 43, 0.12);
-  --brand: #c85e38;
-  --brand-dark: #943b1d;
-  --brand-soft: #fff0e3;
-  --accent: #2c766d;
-  --accent-soft: #e5f3f0;
-  --hero: #0e171e;
-  --shadow: 0 28px 90px rgba(12, 18, 24, 0.18);
-  --radius-xl: 34px;
-  --radius-lg: 26px;
-  --radius-md: 18px;
+  --bg:         #ffffff;
+  --bg-alt:     #f5f2ec;
+  --ink:        #0d1b27;
+  --muted:      #7a8a96;
+  --brand:      #c85e38;
+  --brand-dark: #a34526;
+  --line:       rgba(13, 27, 39, 0.08);
+  --radius:     20px;
+  --shadow:     0 8px 48px rgba(13, 27, 39, 0.10);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  color: var(--ink);
-  background:
-    radial-gradient(circle at top left, rgba(200, 94, 56, 0.16), transparent 24%),
-    radial-gradient(circle at top right, rgba(44, 118, 109, 0.12), transparent 22%),
-    linear-gradient(180deg, #0e171e 0, #13212b 28rem, #efe7da 28rem, #ede5d8 100%);
-}
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); background: var(--bg-alt); }
 a { color: inherit; text-decoration: none; }
 
-.shell {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-}
+.shell { width: min(1120px, calc(100% - 48px)); margin: 0 auto; }
 
-.hero-band {
-  position: relative;
-  overflow: hidden;
-  color: #fff;
+/* ── NAV ─────────────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
 }
-
-.hero-band::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 12% 20%, rgba(44, 118, 109, 0.38), transparent 22%),
-    radial-gradient(circle at 84% 14%, rgba(200, 94, 56, 0.34), transparent 22%);
-  pointer-events: none;
-}
-
-.hero-shell {
-  position: relative;
-  z-index: 1;
-  padding-bottom: 72px;
-}
-
-header {
-  padding: 24px 0 18px;
-}
-
-.header-inner {
+.nav-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
+  height: 68px;
 }
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-mark {
-  width: 46px;
-  height: 46px;
-  border-radius: 15px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, var(--brand) 0%, #ea8b57 100%);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 800;
-  box-shadow: 0 18px 36px rgba(200, 94, 56, 0.28);
-}
-
-.brand-copy {
-  display: grid;
-  gap: 2px;
-}
-
-.brand-name {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-}
-
-.brand-sub {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.56);
-}
-
-.header-nav {
+.nav-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
-
-.nav-link {
+.nav-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.nav-name { font-size: 17px; font-weight: 800; letter-spacing: -0.03em; }
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.nav-links a {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--ink); }
+.nav-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  padding: 0 16px;
+  height: 42px;
+  padding: 0 20px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(14px);
+  background: var(--brand);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
-  transition: 0.18s ease;
+  transition: background 0.15s;
 }
+.nav-cta:hover { background: var(--brand-dark); }
 
-.nav-link:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.1);
+/* ── HERO ────────────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, #0d1b27 0%, #1c3447 100%);
+  padding: 64px 0 72px;
+  color: #fff;
 }
-
-.nav-link.primary {
-  border-color: transparent;
-  background: #fff;
-  color: var(--hero);
-}
-
-.nav-link.reset {
-  background: rgba(255, 240, 227, 0.12);
-  border-color: rgba(255, 240, 227, 0.18);
-  color: #ffd6c5;
-}
-
-.hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-  gap: 24px;
-  align-items: end;
-  padding: 24px 0 0;
-}
-
-.hero-copy {
-  max-width: 34rem;
-}
-
-.eyebrow {
+.hero-eyebrow {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(255, 240, 227, 0.12);
-  border: 1px solid rgba(255, 240, 227, 0.12);
-  color: #ffd7c7;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.66);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  margin-bottom: 22px;
 }
-
-h1 {
-  margin-top: 16px;
+.hero h1 {
   font-family: "Fraunces", serif;
-  font-size: clamp(44px, 6vw, 74px);
-  line-height: 0.94;
-  letter-spacing: -0.05em;
-  max-width: 10ch;
-}
-
-.hero-copy p {
-  margin-top: 18px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 16px;
-  line-height: 1.8;
-}
-
-.hero-meta {
-  display: grid;
-  gap: 12px;
-}
-
-.meta-card {
-  padding: 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-}
-
-.meta-card span {
-  display: block;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.52);
-}
-
-.meta-card strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-}
-
-main {
-  position: relative;
-  z-index: 1;
-  margin-top: -26px;
-  padding-bottom: 32px;
-}
-
-.intro-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
-  gap: 18px;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
   margin-bottom: 18px;
 }
-
-.intro-card,
-.intro-side,
-section {
-  border-radius: var(--radius-xl);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 244, 0.84));
-  border: 1px solid rgba(255, 255, 255, 0.84);
-  box-shadow: var(--shadow);
-}
-
-.intro-card {
-  padding: 24px 26px;
-}
-
-.intro-card p {
-  color: var(--ink);
+.hero p {
   font-size: 16px;
-  line-height: 1.8;
-}
-
-.intro-side {
-  padding: 22px;
-}
-
-.intro-side span {
-  display: block;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.intro-side p {
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 14px;
   line-height: 1.75;
+  color: rgba(255,255,255,0.68);
+  max-width: 52ch;
+  margin: 0;
+}
+.hero-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+.meta-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.07);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.66);
+}
+.meta-pill strong {
+  color: #fff;
+  font-weight: 700;
 }
 
-.content {
+/* ── CONTENT ─────────────────────────────────────────────────── */
+.content-wrap {
+  padding: 56px 0 80px;
+}
+.content-grid {
   display: grid;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
 }
-
-section {
-  padding: 28px;
+.content-main {
+  display: grid;
+  gap: 16px;
 }
-
-h2 {
+.section-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+}
+.section-card h2 {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 14px;
   font-family: "Fraunces", serif;
-  font-size: 30px;
-  letter-spacing: -0.04em;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  margin-bottom: 14px;
 }
-
 .sec-num {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: rgba(200, 94, 56, 0.10);
+  color: var(--brand);
   font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 12px;
   font-weight: 800;
   flex-shrink: 0;
 }
-
-p {
-  color: #32414f;
+.section-card p {
   font-size: 15px;
   line-height: 1.85;
-  margin-bottom: 14px;
+  color: #32414f;
+  margin-bottom: 12px;
 }
-
-p:last-child { margin-bottom: 0; }
-
-ul {
+.section-card p:last-child { margin-bottom: 0; }
+.section-card ul {
   list-style: none;
   display: grid;
-  gap: 10px;
-  margin: 14px 0;
+  gap: 9px;
+  margin: 12px 0;
 }
-
-li {
+.section-card li {
   position: relative;
-  padding-left: 22px;
-  color: #32414f;
+  padding-left: 20px;
   font-size: 15px;
-  line-height: 1.75;
+  line-height: 1.7;
+  color: #32414f;
 }
-
-li::before {
+.section-card li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 11px;
-  width: 7px;
-  height: 7px;
+  top: 10px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--brand);
 }
-
 .contact-card {
   margin-top: 14px;
-  padding: 18px 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.7);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--bg-alt);
   border: 1px solid var(--line);
 }
-
 .contact-card .label {
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
-
-.footer-band {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #14212b 0%, #1b2e39 48%, #2b4a4c 100%);
-  color: #fff;
-  padding: 20px 0 34px;
-}
-
-.footer-band::before {
-  content: "JOBREADY";
-  position: absolute;
-  inset: auto 0 46px;
-  text-align: center;
-  font-size: clamp(4rem, 15vw, 12rem);
-  font-weight: 800;
-  letter-spacing: -0.12em;
-  color: rgba(255, 255, 255, 0.05);
-  pointer-events: none;
-}
-
-.footer-panel {
-  position: relative;
-  z-index: 1;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 24px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.footer-brand {
-  max-width: 26rem;
-}
-
-.footer-brand p {
-  margin-top: 14px;
-  color: rgba(255, 255, 255, 0.62);
+.contact-card p {
   font-size: 14px;
-  line-height: 1.8;
+  margin-bottom: 6px;
 }
 
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+/* ── SIDEBAR ─────────────────────────────────────────────────── */
+.sidebar {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 14px;
 }
-
-.footer-links a {
+.sidebar-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+.sidebar-card h3 {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+.sidebar-card p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.sidebar-card p:last-child { margin-bottom: 0; }
+.sidebar-card a.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  padding: 0 16px;
+  width: 100%;
+  height: 42px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--brand);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
+  margin-top: 14px;
+  transition: background 0.15s;
 }
+.sidebar-card a.btn:hover { background: var(--brand-dark); }
 
-.footer-meta {
-  margin-top: 18px;
-  color: rgba(255, 255, 255, 0.46);
+/* ── FOOTER ──────────────────────────────────────────────────── */
+.footer {
+  background: var(--ink);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 36px 0;
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.footer-brand { display: flex; align-items: center; gap: 10px; color: #fff; }
+.footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+.footer-links a {
   font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.46);
+  transition: color 0.15s;
+}
+.footer-links a:hover { color: #fff; }
+.footer-meta { font-size: 13px; color: rgba(255,255,255,0.28); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .content-grid { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .shell { width: calc(100% - 32px); }
+}
+@media (max-width: 600px) {
+  .nav-links { display: none; }
+  .footer-inner { flex-direction: column; align-items: flex-start; }
 }
 
-@media (max-width: 960px) {
-  .hero-grid,
-  .intro-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 760px) {
-  .shell {
-    width: min(100% - 24px, 1120px);
-  }
-
-  .header-inner,
-  .footer-panel {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-nav,
-  .footer-links {
-    width: 100%;
-  }
-
-  .nav-link,
-  .footer-links a {
-    width: 100%;
-  }
-
-  section,
-  .intro-card,
-  .intro-side {
-    padding: 22px;
-  }
-
-  .hero-shell {
-    padding-bottom: 56px;
-  }
-
-  .hero-copy p,
-  .intro-card p,
-  .intro-side p,
-  p,
-  li {
-    font-size: 14px;
-  }
-}
 </style>
 </head>
 <body>
 
-<section class="hero-band">
-  <div class="shell hero-shell">
-    <header>
-      <div class="header-inner">
-        <a class="brand" href="/">
-          <span class="brand-mark">JR</span>
-          <span class="brand-copy">
-            <span class="brand-name">JobReady</span>
-            <span class="brand-sub">Resume intake workflow</span>
-          </span>
-        </a>
-        <nav class="header-nav">
-          <a class="nav-link primary" href="/resume">Resume Builder</a>
-          <a class="nav-link" href="/">Home</a>
-          <a class="nav-link reset" href="/?reset=1">Reset</a>
-        </nav>
+<!-- NAV -->
+<nav class="nav">
+  <div class="shell">
+    <div class="nav-inner">
+      <a class="nav-brand" href="/">
+        <span class="nav-mark">JR</span>
+        <span class="nav-name">JobReady</span>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/resume">Application Form</a>
       </div>
-    </header>
+      <a class="nav-cta" href="/resume">Start application</a>
+    </div>
+  </div>
+</nav>
 
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <div class="eyebrow">Legal</div>
-        <h1>Privacy Policy</h1>
-        <p>
-          This page explains what JobReady collects, why it is collected, where submission files are stored, and how partner-specific agency links affect the saved submission record.
-        </p>
-      </div>
-
-      <div class="hero-meta">
-        <div class="meta-card">
-          <span>Effective</span>
-          <strong>January 1, 2025</strong>
-        </div>
-        <div class="meta-card">
-          <span>Last updated</span>
-          <strong>April 16, 2026</strong>
-        </div>
-      </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="shell">
+    <div class="hero-eyebrow">Legal</div>
+    <h1>Privacy Policy</h1>
+    <p>This page explains what information JobReady collects when you fill in the application form, how it is used, and who it is shared with.</p>
+    <div class="hero-meta">
+      <span class="meta-pill">Effective <strong>1 Jan 2025</strong></span>
+      <span class="meta-pill">Last updated <strong>16 Apr 2026</strong></span>
     </div>
   </div>
 </section>
 
-<main>
+<!-- CONTENT -->
+<div class="content-wrap">
   <div class="shell">
-    <div class="intro-grid">
-      <div class="intro-card">
-        <p>
-          JobReady helps foreign workers prepare submissions for manpower agencies in Singapore. It captures applicant data, generates the PDF, stores the result locally, and mirrors files to cloud storage when configured.
-        </p>
-      </div>
-      <aside class="intro-side">
-        <span>Scope</span>
-        <p>
-          This policy covers information submitted through the JobReady website, including resume details, uploaded documents, generated files, related storage paths, and routing metadata from configured agency links.
-        </p>
-      </aside>
-    </div>
+    <div class="content-grid">
 
-    <div class="content">
-      <section>
-        <h2><span class="sec-num">1</span> Who We Are</h2>
-        <p>JobReady is operated as a resume-building service connecting foreign workers with manpower agencies in Singapore. By using JobReady, you agree to this Privacy Policy.</p>
-      </section>
+      <div class="content-main">
 
-      <section>
-        <h2><span class="sec-num">2</span> Information We Collect</h2>
-        <p>When you use JobReady, we collect the information you provide during the form flow, which may include:</p>
-        <ul>
-          <li>Full name and date of birth</li>
-          <li>Nationality and current location (country and city)</li>
-          <li>Phone number and email address</li>
-          <li>Work experience, job titles, and company names</li>
-          <li>Skills, certifications, and education level</li>
-          <li>Preferred job type, work arrangement, and expected salary</li>
-          <li>Languages spoken</li>
-          <li>The manpower agency selected at the start of the form</li>
-          <li>The overseas partner or referral agency attached to the application link, when applicable</li>
-          <li>A partner link code or routing label used to identify the source link, when applicable</li>
-          <li>A generated submission ID used to track the resume request</li>
-          <li>Uploaded supporting documents that the applicant adds before submission</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2><span class="sec-num">3</span> How We Use Your Information</h2>
-        <p>Your information is used solely for the following purposes:</p>
-        <ul>
-          <li>To generate your resume as a PDF document</li>
-          <li>To submit your resume to the manpower agency you specify</li>
-          <li>To keep the submission tagged to the correct overseas partner or referral link when that link is used</li>
-          <li>To store your resume, generated PDF, and supporting files so they can be reviewed and forwarded</li>
-          <li>To keep a local and mirrored submission record when storage mirroring is configured</li>
-        </ul>
-        <p>We do not use your information for marketing, advertising, or any purpose beyond resume submission and handling.</p>
-      </section>
-
-      <section>
-        <h2><span class="sec-num">4</span> How We Store Your Information</h2>
-        <p>
-          JobReady writes generated resumes and attachment bundles to the local project output structure under the selected agency folder.
-          When a configured partner link is used, the saved bundle may also contain the partner agency name, country, and link code so the route can be traced later.
-          When Supabase credentials are configured, the same relative file structure is mirrored to cloud storage.
-        </p>
-        <p>
-          Access is restricted to authorised personnel only. Your data is not submitted through third-party messaging platforms from this website.
-        </p>
-      </section>
-
-      <section>
-        <h2><span class="sec-num">5</span> Who We Share Your Information With</h2>
-        <p>Your information is shared only with:</p>
-        <ul>
-          <li><strong>The manpower agency</strong> you specify at the start of the form, for employment matching purposes</li>
-          <li><strong>The overseas partner or referral agency</strong> connected to the application link, when needed to coordinate the submission handoff</li>
-          <li><strong>JobReady's operator</strong>, who reviews submissions and forwards resumes to agencies</li>
-          <li><strong>Configured infrastructure providers</strong> that store the generated files and resume data on JobReady's behalf</li>
-        </ul>
-        <p>We do not sell, rent, or share your information with third parties for commercial purposes.</p>
-      </section>
-
-      <section>
-        <h2><span class="sec-num">6</span> Data Retention</h2>
-        <p>Your resume and personal information are retained for as long as necessary to facilitate your job application and related review. You may request deletion of your data at any time by contacting us.</p>
-      </section>
-
-      <section>
-        <h2><span class="sec-num">7</span> Your Rights</h2>
-        <p>You have the right to:</p>
-        <ul>
-          <li>Access the personal information we hold about you</li>
-          <li>Request correction of inaccurate information</li>
-          <li>Request deletion of your data</li>
-          <li>Withdraw consent at any time by stopping use of the service</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2><span class="sec-num">8</span> Third-Party Services</h2>
-        <p>
-          JobReady uses Supabase to store resume data and generated files when the mirror is enabled. Browser-side OCR for resume import
-          runs in the user's browser on the latest build. If additional services are added in the future, those services may have their own privacy policies.
-        </p>
-      </section>
-
-      <section>
-        <h2><span class="sec-num">9</span> Contact Us</h2>
-        <p>If you have any questions about this Privacy Policy or wish to exercise your data rights, please contact us:</p>
-        <div class="contact-card">
-          <div class="label">JobReady Operator</div>
-          <p>Singapore</p>
-          <p>Contact us via the JobReady website or support channel</p>
+        <div class="section-card">
+          <h2><span class="sec-num">1</span> Who We Are</h2>
+          <p>JobReady is a job application service that helps workers apply to manpower agencies in Singapore. By using JobReady, you agree to this Privacy Policy.</p>
         </div>
-      </section>
 
-      <section>
-        <h2><span class="sec-num">10</span> Changes to This Policy</h2>
-        <p>We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated date. Continued use of JobReady after changes constitutes acceptance of the updated policy.</p>
-      </section>
+        <div class="section-card">
+          <h2><span class="sec-num">2</span> What We Collect</h2>
+          <p>When you fill in the application form, we collect the information you provide, which may include:</p>
+          <ul>
+            <li>Full name and date of birth</li>
+            <li>Nationality and current location (country and city)</li>
+            <li>Phone number and email address</li>
+            <li>Work experience, job titles, and company names</li>
+            <li>Skills, certifications, and education level</li>
+            <li>Preferred job type, work arrangement, and expected salary</li>
+            <li>Languages spoken</li>
+            <li>The manpower agency you are applying to</li>
+            <li>Any supporting documents you upload (passport, certificates, etc.)</li>
+          </ul>
+          <p>If you arrived through a partner agency link, we also record which partner agency referred you and a code that identifies that link.</p>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">3</span> How We Use Your Information</h2>
+          <p>Your information is used only to process your job application:</p>
+          <ul>
+            <li>To generate your resume as a PDF document</li>
+            <li>To send your application to the manpower agency you chose</li>
+            <li>To keep your submission tagged to the correct agency and referral partner</li>
+            <li>To store your resume and uploaded files so the agency can review and forward them</li>
+          </ul>
+          <p>We do not use your information for marketing or advertising.</p>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">4</span> How We Store Your Information</h2>
+          <p>Your application — including the generated resume PDF and any files you upload — is saved securely on our servers, organised by the agency you applied to. It is also backed up to cloud storage.</p>
+          <p>Access is restricted to authorised personnel only. Your data is not submitted through third-party messaging platforms from this website.</p>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">5</span> Who We Share Your Information With</h2>
+          <p>Your information is shared only with:</p>
+          <ul>
+            <li><strong>The manpower agency</strong> you selected, for employment matching purposes</li>
+            <li><strong>The overseas partner or referral agency</strong> that sent you the application link, when needed to coordinate your application handoff</li>
+            <li><strong>JobReady's operator</strong>, who manages submissions and forwards resumes to agencies</li>
+          </ul>
+          <p>We do not sell, rent, or share your information with third parties for commercial purposes.</p>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">6</span> How Long We Keep It</h2>
+          <p>Your resume and personal information are kept for as long as needed to process your job application. You may request deletion of your data at any time by contacting us.</p>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">7</span> Your Rights</h2>
+          <p>You have the right to:</p>
+          <ul>
+            <li>See the personal information we hold about you</li>
+            <li>Ask us to correct any information that is wrong</li>
+            <li>Ask us to delete your data</li>
+            <li>Stop using the service at any time</li>
+          </ul>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">8</span> Third-Party Services</h2>
+          <p>JobReady uses secure cloud storage to back up your resume and uploaded files. Browser-side OCR (used to scan an existing resume image) runs entirely in your browser — nothing is sent to a third party during that step.</p>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">9</span> Contact Us</h2>
+          <p>If you have questions about this Privacy Policy or want to exercise your data rights, please contact us:</p>
+          <div class="contact-card">
+            <div class="label">JobReady Operator</div>
+            <p>Singapore</p>
+            <p>Contact us via the JobReady website or support channel</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2><span class="sec-num">10</span> Changes to This Policy</h2>
+          <p>We may update this Privacy Policy from time to time. Any changes will be shown on this page with an updated date. Continuing to use JobReady after changes means you accept the updated policy.</p>
+        </div>
+
+      </div>
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-card">
+          <h3>Ready to apply?</h3>
+          <p>Your application is filled in here and sent directly to the agency. No printing or emailing needed.</p>
+          <a class="btn" href="/resume">Start your application</a>
+        </div>
+        <div class="sidebar-card">
+          <h3>Your data is safe</h3>
+          <p>We only collect what is needed for your job application. We do not sell your information or use it for advertising.</p>
+        </div>
+        <div class="sidebar-card">
+          <h3>Questions?</h3>
+          <p>If you are unsure about anything on this page, contact your agency or reach out to us directly.</p>
+        </div>
+      </aside>
+
     </div>
   </div>
-</main>
+</div>
 
-<footer class="footer-band">
+<!-- FOOTER -->
+<footer class="footer">
   <div class="shell">
-    <div class="footer-panel">
+    <div class="footer-inner">
       <div class="footer-brand">
-        <a class="brand" href="/">
-          <span class="brand-mark">JR</span>
-          <span class="brand-copy">
-            <span class="brand-name">JobReady</span>
-            <span class="brand-sub">Resume intake workflow</span>
-          </span>
-        </a>
-        <p>JobReady handles resume intake, partner-link routing, document collection, PDF generation, and storage mirroring for Singapore agency submissions.</p>
-        <div class="footer-meta">© 2026 JobReady • Privacy Policy</div>
+        <span class="nav-mark">JR</span>
+        <span class="nav-name">JobReady</span>
       </div>
-
       <nav class="footer-links">
         <a href="/">Home</a>
-        <a href="/resume">Resume Builder</a>
+        <a href="/resume">Application Form</a>
         <a href="/privacy">Privacy</a>
-        <a href="/?reset=1">Reset Draft</a>
       </nav>
+      <span class="footer-meta">© 2026 JobReady · Singapore</span>
     </div>
   </div>
 </footer>
