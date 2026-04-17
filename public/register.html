@@ -249,34 +249,44 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
   });
 
   // ── Profile step (after Google OAuth redirect) ──────────────────────────────
-  async function checkOAuthReturn() {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("step") !== "profile") return;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("step") === "profile") {
+    let profileBooted = false;
 
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return;
+    async function showProfileStep(session) {
+      if (profileBooted) return;
+      profileBooted = true;
 
-    // Check if agency already set up
-    const res = await fetch("/api/agency/me", { headers: { Authorization: "Bearer " + session.access_token } });
-    const json = await res.json();
-    if (json.agency) return window.location.replace("/dashboard");
+      // Check if agency already set up
+      const res = await fetch("/api/agency/me", { headers: { Authorization: "Bearer " + session.access_token } });
+      const json = await res.json();
+      if (json.agency) return window.location.replace("/dashboard");
 
-    document.getElementById("step1").style.display = "none";
-    document.getElementById("step2").style.display = "block";
+      document.getElementById("step1").style.display = "none";
+      document.getElementById("step2").style.display = "block";
 
-    document.getElementById("profileForm").addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const name = document.getElementById("agencyName2").value.trim();
-      const slug = slugify(document.getElementById("agencySlug2").value);
-      if (!name || !slug) return showMsg("profileMsg", "Please fill in all fields.", "error");
-      const btn = document.getElementById("profileSubmitBtn");
-      btn.disabled = true; btn.textContent = "Saving…";
-      await setupAgency(session.access_token, name, slug, "profileMsg");
-      btn.disabled = false; btn.textContent = "Finish setup";
+      document.getElementById("profileForm").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const name = document.getElementById("agencyName2").value.trim();
+        const slug = slugify(document.getElementById("agencySlug2").value);
+        if (!name || !slug) return showMsg("profileMsg", "Please fill in all fields.", "error");
+        const btn = document.getElementById("profileSubmitBtn");
+        btn.disabled = true; btn.textContent = "Saving…";
+        await setupAgency(session.access_token, name, slug, "profileMsg");
+        btn.disabled = false; btn.textContent = "Finish setup";
+      });
+    }
+
+    // onAuthStateChange handles the OAuth hash fragment correctly
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (session) await showProfileStep(session);
+    });
+
+    // Fallback for already-active sessions
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session) showProfileStep(session);
     });
   }
-
-  checkOAuthReturn();
 
   // ── Shared: call /api/agency/setup then redirect ────────────────────────────
   async function setupAgency(token, name, slug, msgId) {

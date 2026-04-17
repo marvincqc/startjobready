@@ -287,16 +287,30 @@ a { color: inherit; text-decoration: none; }
   let loadingMore = false;
 
   // ── Auth guard ──────────────────────────────────────────────────────────────
-  async function init() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return window.location.replace("/login");
+  let booted = false;
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (booted) return;
+    if (!session) { window.location.replace("/login"); return; }
+    booted = true;
     token = session.access_token;
+    await loadAgencyAndData();
+  });
 
+  // Fallback: if onAuthStateChange never fires (no hash, no stored session)
+  setTimeout(async () => {
+    if (booted) return;
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.replace("/login"); return; }
+    booted = true;
+    token = session.access_token;
+    await loadAgencyAndData();
+  }, 1500);
+
+  async function loadAgencyAndData() {
     const meRes = await fetch("/api/agency/me", { headers: auth() });
     const meJson = await meRes.json();
 
     if (!meJson.agency) {
-      // New user via Google who hasn't completed profile
       return window.location.replace("/register?step=profile");
     }
 
@@ -307,6 +321,8 @@ a { color: inherit; text-decoration: none; }
     loadSubmissions();
     loadLinks();
   }
+
+  function init() {} // kept for compatibility
 
   function auth() { return { Authorization: "Bearer " + token }; }
 
@@ -564,7 +580,6 @@ a { color: inherit; text-decoration: none; }
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
 
-  init();
 })();
 </script>
 </body>
