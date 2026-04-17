@@ -14,10 +14,21 @@ const { generateAndStorePDF } = require("./src/pdf");
 const packageInfo = require("./package.json");
 
 // Supabase admin client (service role for server-side inserts + JWT validation)
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY
-);
+// Lazy init so missing env vars don't crash the server on startup
+let _supabase = null;
+function getSupabase() {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_KEY env vars are required.");
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
+// Convenience proxy so existing code using `supabase.from(...)` still works
+const supabase = new Proxy({}, {
+  get(_, prop) { return getSupabase()[prop]; },
+});
 
 const app = express();
 const rootDir = __dirname;
