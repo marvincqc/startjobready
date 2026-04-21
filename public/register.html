@@ -79,6 +79,25 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
 .step2 { display: none; }
 .step2.visible { display: block; }
 
+/* ── PROFILE MODAL (Google OAuth step 2) ────────────────────── */
+.profile-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(13, 27, 39, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+.profile-overlay.active { display: flex; }
+.profile-modal {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 40px;
+  width: min(480px, 100%);
+  box-shadow: 0 24px 60px rgba(13, 27, 39, 0.18);
+}
+
 /* ── SUBMIT BTN ──────────────────────────────────────────────── */
 .btn-submit {
   display: flex; align-items: center; justify-content: center;
@@ -157,25 +176,30 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
         </form>
       </div>
 
-      <!-- Step 2: Agency profile (shown after Google sign-in) -->
-      <div id="step2" style="display:none;">
-        <form id="profileForm">
-          <div class="form-group">
-            <label for="agencyName2">Agency name</label>
-            <input type="text" id="agencyName2" placeholder="e.g. Apex Manpower" required autocomplete="organization">
-          </div>
-          <div class="form-group">
-            <label for="agencySlug2">Your short code</label>
-            <input type="text" id="agencySlug2" placeholder="e.g. apex" maxlength="24" required autocomplete="off">
-            <div class="slug-preview" id="slugPreview2">Your worker link will be: <strong>jobready.sg/apply/apex-…</strong></div>
-            <div class="field-hint">Letters, numbers and hyphens only. Cannot be changed later.</div>
-          </div>
-          <div id="profileMsg"></div>
-          <button type="submit" class="btn-submit" id="profileSubmitBtn">Finish setup</button>
-        </form>
-      </div>
-
       <div class="card-footer">Already have an account? <a href="/login">Sign in</a></div>
+    </div>
+  </div>
+
+  <!-- Step 2: Agency profile modal (shown after Google sign-in) -->
+  <div id="step2" class="profile-overlay">
+    <div class="profile-modal">
+      <div class="card-eyebrow">Almost there</div>
+      <h1 style="font-family:'Fraunces',serif;font-size:28px;letter-spacing:-0.03em;line-height:1.1;margin-bottom:8px;">Set up your agency</h1>
+      <p style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;">You're signed in. Just fill in your agency details to finish.</p>
+      <form id="profileForm">
+        <div class="form-group">
+          <label for="agencyName2">Agency name</label>
+          <input type="text" id="agencyName2" placeholder="e.g. Apex Manpower" required autocomplete="organization">
+        </div>
+        <div class="form-group">
+          <label for="agencySlug2">Your short code</label>
+          <input type="text" id="agencySlug2" placeholder="e.g. apex" maxlength="24" required autocomplete="off">
+          <div class="slug-preview" id="slugPreview2">Your worker link will be: <strong>jobready.sg/apply/apex-…</strong></div>
+          <div class="field-hint">Letters, numbers and hyphens only. Cannot be changed later.</div>
+        </div>
+        <div id="profileMsg"></div>
+        <button type="submit" class="btn-submit" id="profileSubmitBtn">Finish setup</button>
+      </form>
     </div>
   </div>
 </main>
@@ -263,8 +287,7 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
       const json = await res.json();
       if (json.agency) return window.location.replace("/dashboard");
 
-      document.getElementById("step1").style.display = "none";
-      document.getElementById("step2").style.display = "block";
+      document.getElementById("step2").classList.add("active");
 
       document.getElementById("profileForm").addEventListener("submit", async (ev) => {
         ev.preventDefault();
