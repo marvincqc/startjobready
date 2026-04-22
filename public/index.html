@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobReady — Resume Builder</title>
+<title>JobReady — Application Form</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1606,11 +1606,10 @@ function render() {
   applyPartnerContext();
   renderContextBanner();
   const steps = getSteps();
-  const total = steps.length + 1; // +1 for review
   const isReview = currentStep >= steps.length;
 
-  // Progress
-  const pct = Math.round((currentStep / total) * 100);
+  // Progress: (currentStep + 1) / steps.length so last step = 100%
+  const pct = Math.min(100, Math.round(((currentStep + 1) / steps.length) * 100));
   document.getElementById("progressFill").style.width = pct + "%";
   document.getElementById("stepPct").textContent = pct + "%";
   document.getElementById("stepLabel").textContent = isReview
@@ -1618,9 +1617,9 @@ function render() {
     : t("stepOf", currentStep + 1, steps.length);
   document.getElementById("progressWrap").style.display = isReview ? "none" : "";
 
-  // Show Start Over only from step 2 onward (not on step 1, not on success)
+  // Show Start Over only steps 2–19 (not step 1, not review, not success)
   const startOverBtn = document.getElementById("startOverBtn");
-  if (startOverBtn) startOverBtn.style.display = currentStep > 0 ? "" : "none";
+  if (startOverBtn) startOverBtn.style.display = (currentStep > 0 && !isReview) ? "" : "none";
 
   // Draft restored notice — show once on the first render after restore
   const existingNotice = document.getElementById("draftNotice");
@@ -1960,6 +1959,7 @@ function renderReview() {
     </div>`;
   }
 
+  html += `<div id="submitErr" style="display:none;font-size:13px;padding:10px 14px;border-radius:10px;background:#fff5f5;border:1px solid #fed7d7;color:#c53030;margin-bottom:10px;"></div>`;
   html += `<button class="btn-submit" onclick="submitResume()">${t("submit")}</button>`;
   html += `<div class="nav" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
     <button class="btn-back" onclick="goBack()">${t("back")}</button>
@@ -2079,7 +2079,19 @@ function advance() {
 
 function goBack() {
   if (editingKey) { editingKey = null; currentStep = getSteps().length; render(); return; }
-  if (currentStep > 0) { currentStep--; render(); window.scrollTo(0,0); }
+  if (currentStep <= 0) return;
+  const steps = getSteps();
+  currentStep--;
+  // Skip backwards over steps whose title is blank (same logic as advance())
+  while (currentStep > 0) {
+    const s = steps[currentStep];
+    if ((s.k === "job2Company" || s.k === "job2Dates") && !data["job2Title"]) { currentStep--; continue; }
+    if (s.k === "job3Title" && !data["job2Title"]) { currentStep--; continue; }
+    if ((s.k === "job3Company" || s.k === "job3Dates") && !data["job3Title"]) { currentStep--; continue; }
+    break;
+  }
+  render();
+  window.scrollTo(0, 0);
 }
 
 function editField(key) {
@@ -2104,7 +2116,16 @@ function goToDocumentsStep() {
 function showErr(el, msg) {
   el.textContent = msg;
   el.classList.add("show");
-  document.querySelectorAll(".field").forEach(field => field.classList.add("error"));
+  const card = document.querySelector(".step-card.active");
+  if (card) card.querySelectorAll(".field").forEach(f => f.classList.add("error"));
+}
+
+function showSubmitErr(msg) {
+  const el = document.getElementById("submitErr");
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = "block";
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function changeLang(l) {
@@ -2280,6 +2301,16 @@ function extractExperienceFields(lines) {
   return {};
 }
 
+function matchSelectOption(raw, opts) {
+  if (!raw) return "";
+  const clean = raw.toLowerCase().replace(/[^a-z]/g, "");
+  for (const opt of opts) {
+    const stripped = opt.replace(/[^\w\s]/gu, "").trim().toLowerCase().replace(/[^a-z]/g, "");
+    if (stripped === clean || stripped.includes(clean) || clean.includes(stripped)) return opt;
+  }
+  return "";
+}
+
 function applyOcrAutofill(text) {
   const normalized = normalizeOcrText(text);
   const lines = normalized.split(/\n+/).map(cleanOcrLine).filter(Boolean);
@@ -2294,12 +2325,24 @@ function applyOcrAutofill(text) {
     filled.push(key);
   };
 
+  const maybeSetSelect = (key, value, opts) => {
+    const matched = matchSelectOption(cleanOcrLine(value), opts);
+    if (!matched) return;
+    if (data[key] && String(data[key]).trim()) return;
+    data[key] = matched;
+    filled.push(key);
+  };
+
+  const steps = getSteps();
+  const natOpts  = (steps.find(s => s.k === "nationality")  || {}).opts || [];
+  const ctrOpts  = (steps.find(s => s.k === "country")      || {}).opts || [];
+
   maybeSet("name", extractLikelyName(lines));
   maybeSet("email", extractEmail(joined));
   maybeSet("phone", extractPhone(joined));
   maybeSet("dob", extractDob(joined));
-  maybeSet("nationality", extractInlineValue(joined, [/nationality\s*[:\-]?\s*([^\n]+)/i]));
-  maybeSet("country", extractInlineValue(joined, [/(?:country|current country)\s*[:\-]?\s*([^\n]+)/i]));
+  maybeSetSelect("nationality", extractInlineValue(joined, [/nationality\s*[:\-]?\s*([^\n]+)/i]), natOpts);
+  maybeSetSelect("country", extractInlineValue(joined, [/(?:country|current country)\s*[:\-]?\s*([^\n]+)/i]), ctrOpts);
   maybeSet("city", extractInlineValue(joined, [/(?:city|town)\s*[:\-]?\s*([^\n]+)/i]));
   maybeSet("skills", extractSectionValue(lines, [/^skills$/i, /^core skills$/i, /^technical skills$/i]));
   maybeSet("certs", extractSectionValue(lines, [/^certifications$/i, /^certification$/i, /^licenses$/i, /^licences$/i]));
@@ -2425,12 +2468,12 @@ async function submitResume() {
       lastSubmitResult = json;
       showSuccess(json);
     } else {
-      alert("Submission failed: " + (json.error || "Unknown error"));
+      showSubmitErr(json.error || "Submission failed. Please try again.");
       if (btn) btn.disabled = false;
     }
   } catch(err) {
     loadingEl.classList.remove("show");
-    alert("Network error. Please try again.");
+    showSubmitErr("Network error. Please check your connection and try again.");
     if (btn) btn.disabled = false;
   }
 }
@@ -2480,6 +2523,10 @@ renderContextBanner();
 render();
 
 function openExitModal() {
+  if (currentStep === 0) {
+    showExitScreen(null);
+    return;
+  }
   document.getElementById("exitOverlay").classList.add("active");
 }
 
@@ -2495,14 +2542,30 @@ function showExitScreen(saved) {
   wizard.innerHTML = "";
   const card = document.createElement("div");
   card.className = "step-card active";
+  const icon  = saved === null ? "👋" : saved ? "🔖" : "👋";
+  const title = saved === null ? "No problem" : saved ? "See you later" : "All done";
+  const resumeUrl = window.location.origin + buildCurrentResumeUrl();
+  const body  = saved === null
+    ? "You can close this tab. When you're ready, use the same link from your agency to start your application."
+    : saved
+      ? "Your progress has been saved. Open the link below to continue your application."
+      : "Your form has been cleared. Use the same link from your agency if you'd like to start again.";
+  const safeUrl = resumeUrl.replace(/"/g, "&quot;");
+  const linkHtml = saved === true ? `
+    <div style="margin-top:16px;background:#f5f2ec;border-radius:10px;padding:12px 14px;font-size:13px;word-break:break-all;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+        <strong style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#7a8a96;">Your link</strong>
+        <button onclick="navigator.clipboard.writeText('${safeUrl}').then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1800)})"
+          style="font-size:12px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;white-space:nowrap;">Copy</button>
+      </div>
+      <span style="color:#0d1b27;">${resumeUrl}</span>
+    </div>` : "";
   card.innerHTML = `
     <div class="exit-screen">
-      <div class="exit-screen-icon">${saved ? "🔖" : "👋"}</div>
-      <h2>${saved ? "See you later" : "All done"}</h2>
-      <p>${saved
-        ? "Your progress has been saved. Use the same link from your agency to continue your application."
-        : "Your form has been cleared. Use the same link from your agency if you'd like to start again."
-      }</p>
+      <div class="exit-screen-icon">${icon}</div>
+      <h2>${title}</h2>
+      <p>${body}</p>
+      ${linkHtml}
     </div>
   `;
   wizard.appendChild(card);

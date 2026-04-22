@@ -292,6 +292,7 @@ a { color: inherit; text-decoration: none; }
   const hasPendingOAuth = new URLSearchParams(window.location.search).has("code");
   let booted = false;
   sb.auth.onAuthStateChange(async (event, session) => {
+    if (session) token = session.access_token; // always keep token fresh
     if (booted) return;
     if (!session) {
       if (hasPendingOAuth) return; // exchange in progress, wait
@@ -299,9 +300,15 @@ a { color: inherit; text-decoration: none; }
       return;
     }
     booted = true;
-    token = session.access_token;
     await loadAgencyAndData();
   });
+
+  // Show a hint if loading takes more than 2s
+  setTimeout(() => {
+    if (booted) return;
+    const el = document.getElementById("submissionsContent");
+    if (el) el.innerHTML = `<div class="spinner"></div><p style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px;">Taking a moment — hang tight…</p>`;
+  }, 2000);
 
   // Fallback: if onAuthStateChange never fires (no hash, no stored session)
   setTimeout(async () => {
@@ -314,19 +321,26 @@ a { color: inherit; text-decoration: none; }
   }, 3000);
 
   async function loadAgencyAndData() {
-    const meRes = await fetch("/api/agency/me", { headers: auth() });
-    const meJson = await meRes.json();
+    try {
+      const meRes = await fetch("/api/agency/me", { headers: auth() });
+      if (meRes.status === 401) return window.location.replace("/login");
+      const meJson = await meRes.json();
 
-    if (!meJson.agency) {
-      return window.location.replace("/register?step=profile");
+      if (!meJson.agency) {
+        return window.location.replace("/register?step=profile");
+      }
+
+      agencySlug = meJson.agency.slug;
+      document.getElementById("agencyBadge").textContent = meJson.agency.name;
+      document.title = `${meJson.agency.name} — JobReady`;
+
+      loadSubmissions();
+      loadLinks();
+    } catch (err) {
+      document.getElementById("submissionsContent").innerHTML =
+        `<p style="color:#c53030;font-size:14px;">Failed to load dashboard. Please refresh the page.</p>`;
+      console.error("loadAgencyAndData error:", err);
     }
-
-    agencySlug = meJson.agency.slug;
-    document.getElementById("agencyBadge").textContent = meJson.agency.name;
-    document.title = `${meJson.agency.name} — JobReady`;
-
-    loadSubmissions();
-    loadLinks();
   }
 
   function init() {} // kept for compatibility
@@ -356,32 +370,38 @@ a { color: inherit; text-decoration: none; }
     const btn = document.getElementById("loadMoreBtn");
     btn.disabled = true;
 
-    const url = `/api/submissions?limit=20${cursor ? "&cursor=" + encodeURIComponent(cursor) : ""}`;
-    const res = await fetch(url, { headers: auth() });
-    const json = await res.json();
+    try {
+      const url = `/api/submissions?limit=20${cursor ? "&cursor=" + encodeURIComponent(cursor) : ""}`;
+      const res = await fetch(url, { headers: auth() });
+      const json = await res.json();
 
-    if (!json.ok) {
-      document.getElementById("submissionsContent").innerHTML = `<p style="color:#c53030;font-size:14px;">${json.error}</p>`;
-      loadingMore = false; return;
+      if (!json.ok) {
+        document.getElementById("submissionsContent").innerHTML = `<p style="color:#c53030;font-size:14px;">${esc(json.error)}</p>`;
+        btn.disabled = false;
+        loadingMore = false; return;
+      }
+
+      nextCursor = json.nextCursor;
+      btn.style.display = nextCursor ? "flex" : "none";
+      btn.disabled = false;
+
+      const list = json.submissions;
+      const container = document.getElementById("submissionsContent");
+
+      if (!cursor && list.length === 0) {
+        container.innerHTML = `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`;
+        loadingMore = false; return;
+      }
+
+      if (!cursor) container.innerHTML = `<div class="submissions-list" id="subList"></div>`;
+      const subList = document.getElementById("subList");
+      list.forEach(s => subList.appendChild(buildSubRow(s)));
+    } catch (err) {
+      btn.disabled = false;
+      console.error("loadSubmissions error:", err);
+    } finally {
+      loadingMore = false;
     }
-
-    nextCursor = json.nextCursor;
-    btn.style.display = nextCursor ? "flex" : "none";
-    btn.disabled = false;
-
-    const list = json.submissions;
-    const container = document.getElementById("submissionsContent");
-
-    if (!cursor && list.length === 0) {
-      container.innerHTML = `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`;
-      loadingMore = false; return;
-    }
-
-    if (!cursor) container.innerHTML = `<div class="submissions-list" id="subList"></div>`;
-    const subList = document.getElementById("subList");
-    list.forEach(s => subList.appendChild(buildSubRow(s)));
-
-    loadingMore = false;
   }
 
   document.getElementById("loadMoreBtn").addEventListener("click", () => {
@@ -432,7 +452,7 @@ a { color: inherit; text-decoration: none; }
       { k: "Attachments", v: s.attachment_count || 0 },
     ];
 
-    const pdfUrl = s.pdf_path ? `/resume_output/${s.pdf_path.split("/").pop()}` : null;
+    const pdfUrl = s.pdf_path ? `/api/pdf/${s.pdf_path.split("/").pop()}?token=${encodeURIComponent(token)}` : null;
 
     body.innerHTML = `
       <div class="drawer-section">
@@ -537,6 +557,9 @@ a { color: inherit; text-decoration: none; }
   document.getElementById("cancelLinkBtn").addEventListener("click", () => {
     document.getElementById("newLinkForm").classList.remove("open");
     document.getElementById("newLinkMsg").innerHTML = "";
+    document.getElementById("partnerName").value = "";
+    document.getElementById("partnerCountry").value = "";
+    document.getElementById("linkCode").value = "";
   });
 
   document.getElementById("saveLinkBtn").addEventListener("click", async () => {

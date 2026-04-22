@@ -36,7 +36,8 @@ const resumeOutputDir = path.join(rootDir, "resume_output");
 const agencyLinksPath = path.join(rootDir, "config", "agency-links.json");
 const appName = "JobReady";
 
-app.use("/resume_output", express.static(resumeOutputDir));
+// /resume_output is NOT served as a public static directory.
+// PDFs are gated behind /api/pdf/:filename (see below).
 app.use(express.static(path.join(rootDir, "public"), { index: false }));
 app.use(express.json({ limit: "50mb" }));
 
@@ -209,6 +210,25 @@ async function readSubmissionInput(req) {
   };
 }
 
+// ─── Simple in-memory rate limiter ────────────────────────────────────────────
+const _rateBuckets = new Map();
+function rateLimit({ windowMs, max }) {
+  return (req, res, next) => {
+    const key = req.ip || "unknown";
+    const now = Date.now();
+    let bucket = _rateBuckets.get(key);
+    if (!bucket || now - bucket.start > windowMs) {
+      bucket = { start: now, count: 0 };
+      _rateBuckets.set(key, bucket);
+    }
+    bucket.count++;
+    if (bucket.count > max) {
+      return res.status(429).json({ ok: false, error: "Too many requests. Please wait before submitting again." });
+    }
+    next();
+  };
+}
+
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 async function requireAuth(req, res, next) {
   const authHeader = req.headers["authorization"] || "";
@@ -223,6 +243,24 @@ async function requireAuth(req, res, next) {
 }
 
 const SUPER_ADMIN = "marvincqc@gmail.com";
+
+// ─── Authenticated PDF download ───────────────────────────────────────────────
+app.get("/api/pdf/:filename", async (req, res) => {
+  const token = (() => {
+    const h = req.headers["authorization"] || "";
+    if (h.startsWith("Bearer ")) return h.slice(7);
+    return req.query.token || null;
+  })();
+  if (!token) return res.status(401).send("Unauthorized");
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).send("Unauthorized");
+
+  const filename = path.basename(req.params.filename); // prevent path traversal
+  const filePath = path.join(resumeOutputDir, filename);
+  res.sendFile(filePath, err => {
+    if (err && !res.headersSent) res.status(404).send("Not found");
+  });
+});
 
 // ─── Health check (used by cron keepalive) ────────────────────────────────────
 app.get("/health", (_req, res) => res.json({ status: "ok", ...getDeploymentMeta() }));
@@ -252,6 +290,7 @@ app.get("/apply/:slug", async (req, res) => {
     params.set("partnerLinkCode", dbLink.full_slug);
     params.set("partnerLinkId", dbLink.id);
     if (dbLink.partner_name) params.set("partnerAgency", dbLink.partner_name);
+    if (dbLink.partner_name) params.set("linkLabel", dbLink.partner_name);
     if (dbLink.partner_country) params.set("partnerCountry", dbLink.partner_country);
     if (dbLink.lock_agency) params.set("lockAgency", "1");
     return res.redirect(`/resume?${params.toString()}`);
@@ -421,9 +460,10 @@ app.patch("/api/links/:id", requireAuth, async (req, res) => {
     .eq("id", req.params.id)
     .eq("agency_id", agency.id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) return res.status(500).json({ ok: false, error: error.message });
+  if (!data) return res.status(404).json({ ok: false, error: "Link not found" });
   res.json({ ok: true, link: data });
 });
 
@@ -493,7 +533,7 @@ app.all("/ocr-passport", (_req, res) => {
 });
 
 // ─── Web wizard submit ────────────────────────────────────────────────────────
-app.post("/submit", async (req, res) => {
+app.post("/submit", rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {
   let cleanupDir = null;
   try {
     const submission = await readSubmissionInput(req);
@@ -517,7 +557,7 @@ app.post("/submit", async (req, res) => {
     // Save submission record to Supabase
     try {
       let agencyId = null;
-      let partnerLinkId = data.partnerLinkId || null;
+      let partnerLinkId = null;
 
       if (data.agency) {
         const { data: agencyRow } = await supabase
@@ -528,9 +568,20 @@ app.post("/submit", async (req, res) => {
         if (agencyRow) agencyId = agencyRow.id;
       }
 
+      // Validate that the supplied partnerLinkId actually belongs to this agency
+      if (data.partnerLinkId && agencyId) {
+        const { data: linkRow } = await supabase
+          .from("partner_links")
+          .select("id")
+          .eq("id", data.partnerLinkId)
+          .eq("agency_id", agencyId)
+          .maybeSingle();
+        if (linkRow) partnerLinkId = linkRow.id;
+      }
+
       await supabase.from("submissions").insert({
         agency_id: agencyId,
-        partner_link_id: partnerLinkId || null,
+        partner_link_id: partnerLinkId,
         worker_name: data.name || null,
         nationality: data.nationality || null,
         job_type: data.jobType || data.job_type || null,

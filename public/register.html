@@ -138,7 +138,7 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
 <main>
   <div class="shell">
     <div class="card">
-      <div class="card-eyebrow">Agency Registration</div>
+      <div class="card-eyebrow">Agency Portal</div>
       <h1>Set up your agency account</h1>
       <p class="card-sub">Create your free account to start sending workers their application link.</p>
 
@@ -153,7 +153,7 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
 
         <form id="emailForm">
           <div class="form-group">
-            <label for="email">Work email</label>
+            <label for="email">Email</label>
             <input type="email" id="email" placeholder="you@agency.com" required autocomplete="email">
           </div>
           <div class="form-group">
@@ -183,7 +183,7 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
   <!-- Step 2: Agency profile modal (shown after Google sign-in) -->
   <div id="step2" class="profile-overlay">
     <div class="profile-modal">
-      <div class="card-eyebrow">Almost there</div>
+      <div class="card-eyebrow">Agency Setup</div>
       <h1 style="font-family:'Fraunces',serif;font-size:28px;letter-spacing:-0.03em;line-height:1.1;margin-bottom:8px;">Set up your agency</h1>
       <p style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;">You're signed in. Just fill in your agency details to finish.</p>
       <form id="profileForm">
@@ -237,14 +237,16 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
   attachSlugPreview("agencySlug2", "slugPreview2");
 
   // ── Email / password form — show name+slug fields after filling email+pass ──
+  function checkStep2Fields() {
+    const email = document.getElementById("email").value.trim();
+    const pass  = document.getElementById("password").value;
+    if (email && pass.length >= 8) {
+      document.getElementById("step2fields").classList.add("visible");
+    }
+  }
   ["email", "password"].forEach(id => {
-    document.getElementById(id).addEventListener("blur", () => {
-      const email = document.getElementById("email").value.trim();
-      const pass  = document.getElementById("password").value;
-      if (email && pass.length >= 8) {
-        document.getElementById("step2fields").classList.add("visible");
-      }
-    });
+    document.getElementById(id).addEventListener("blur", checkStep2Fields);
+    document.getElementById(id).addEventListener("input", checkStep2Fields);
   });
 
   // ── Email sign-up ───────────────────────────────────────────────────────────
@@ -324,9 +326,13 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
     window.location.replace("/dashboard");
   }
 
+  function esc(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
   function showMsg(id, text, type) {
     const el = document.getElementById(id);
-    el.innerHTML = `<div class="msg ${type}">${text}</div>`;
+    el.innerHTML = `<div class="msg ${type}">${esc(text)}</div>`;
   }
 })();
 </script>
