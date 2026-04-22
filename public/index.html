@@ -952,7 +952,7 @@ select.field {
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     </div>
-    <a class="start-over-btn" href="/?reset=1" onclick="return resetToHome(event)">
+    <a class="start-over-btn" id="startOverBtn" href="#" onclick="return resetToForm(event)" style="display:none;">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7a5 5 0 1 0 1.07-3.07" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 3v4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Start Over
     </a>
@@ -1174,6 +1174,7 @@ let data = {};
 let editingKey = null;
 let lastSubmitResult = null;
 let attachments = [];
+let restoredDraft = false;
 
 function t(key, ...args) {
   const L = TR[lang] ?? TR.en;
@@ -1255,6 +1256,7 @@ function restoreDraft() {
     if (saved.lang && TR[saved.lang]) lang = saved.lang;
     if (Number.isInteger(saved.currentStep)) currentStep = saved.currentStep;
     if (saved.data && typeof saved.data === "object") data = saved.data;
+    if (currentStep > 0) restoredDraft = true;
   } catch (_) {}
   applyPartnerContext();
 }
@@ -1265,11 +1267,11 @@ function clearDraft() {
   } catch (_) {}
 }
 
-function resetToHome(event) {
+function resetToForm(event) {
   if (event) event.preventDefault();
   clearDraft();
   attachments = [];
-  window.location.assign(HOME_RESET_URL);
+  window.location.assign(buildCurrentResumeUrl());
   return false;
 }
 
@@ -1522,6 +1524,22 @@ function render() {
     ? t("reviewTitle")
     : t("stepOf", currentStep + 1, steps.length);
   document.getElementById("progressWrap").style.display = isReview ? "none" : "";
+
+  // Show Start Over only from step 2 onward (not on step 1, not on success)
+  const startOverBtn = document.getElementById("startOverBtn");
+  if (startOverBtn) startOverBtn.style.display = currentStep > 0 ? "" : "none";
+
+  // Draft restored notice — show once on the first render after restore
+  const existingNotice = document.getElementById("draftNotice");
+  if (restoredDraft && !existingNotice && currentStep > 0) {
+    const notice = document.createElement("div");
+    notice.id = "draftNotice";
+    notice.style.cssText = "font-size:13px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;";
+    notice.innerHTML = `<span>Continuing your saved draft.</span><a href="#" onclick="return resetToForm(event)" style="color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;">Start Over</a>`;
+    document.getElementById("wizard").before(notice);
+    restoredDraft = false;
+  }
+
   persistDraft();
 
   if (isReview) { renderReview(); return; }
@@ -1850,7 +1868,10 @@ function renderReview() {
   }
 
   html += `<button class="btn-submit" onclick="submitResume()">${t("submit")}</button>`;
-  html += `<div class="nav"><button class="btn-back" onclick="goBack()">${t("back")}</button></div>`;
+  html += `<div class="nav" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <button class="btn-back" onclick="goBack()">${t("back")}</button>
+    <a href="#" onclick="return resetToForm(event)" style="font-size:13px;color:var(--accent);font-weight:700;text-decoration:none;">Start Over</a>
+  </div>`;
 
   card.innerHTML = html;
   wizard.appendChild(card);
@@ -2346,6 +2367,7 @@ function showSuccess(result = {}) {
       ${attachmentsNote}
       ${routingNote}
       ${noCopyNote}
+      <a href="#" onclick="return resetToForm(event)" style="display:inline-block;margin-top:28px;font-size:14px;font-weight:700;color:var(--accent);text-decoration:none;">Submit for a different person →</a>
     </div>
   `;
   wizard.appendChild(card);
