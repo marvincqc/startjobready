@@ -164,22 +164,6 @@ body {
 }
 .exit-btn:hover { color: var(--ink); }
 
-.import-btn {
-  background: var(--accent);
-  border: none;
-  border-radius: 999px;
-  padding: 0 16px;
-  min-height: 38px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.import-btn:hover { background: var(--accent-dark); }
-.import-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
 /* ── Exit modal ── */
 .exit-overlay {
   display: none;
@@ -995,7 +979,6 @@ select.field {
   .page-link,
   .builder-link,
   .site-footer-nav a,
-  .import-btn,
   .lang-select {
     width: 100%;
   }
@@ -1018,7 +1001,6 @@ select.field {
         <option value="hi">🇮🇳 हिन्दी</option>
         <option value="bn">🇧🇩 বাংলা</option>
       </select>
-      <button class="import-btn" id="importBtn" type="button" onclick="openOcrImport()">Import resume</button>
       <button class="exit-btn" id="exitBtn" type="button" onclick="openExitModal()">Exit</button>
     </div>
   </div>
@@ -1060,8 +1042,6 @@ select.field {
   <div class="spinner"></div>
   <div class="loading-msg" id="loadingMsg">Generating your resume...</div>
 </div>
-
-<input type="file" id="ocrFile" accept="image/*" hidden>
 
 <div class="exit-overlay" id="exitOverlay">
   <div class="exit-modal">
@@ -2306,53 +2286,6 @@ function matchSelectOption(raw, opts) {
   return "";
 }
 
-function applyOcrAutofill(text) {
-  const normalized = normalizeOcrText(text);
-  const lines = normalized.split(/\n+/).map(cleanOcrLine).filter(Boolean);
-  const joined = lines.join(" ");
-  const filled = [];
-
-  const maybeSet = (key, value) => {
-    const cleaned = cleanOcrLine(value);
-    if (!cleaned) return;
-    if (data[key] && String(data[key]).trim()) return;
-    data[key] = cleaned;
-    filled.push(key);
-  };
-
-  const maybeSetSelect = (key, value, opts) => {
-    const matched = matchSelectOption(cleanOcrLine(value), opts);
-    if (!matched) return;
-    if (data[key] && String(data[key]).trim()) return;
-    data[key] = matched;
-    filled.push(key);
-  };
-
-  const steps = getSteps();
-  const natOpts  = (steps.find(s => s.k === "nationality")  || {}).opts || [];
-  const ctrOpts  = (steps.find(s => s.k === "country")      || {}).opts || [];
-
-  maybeSet("name", extractLikelyName(lines));
-  maybeSet("email", extractEmail(joined));
-  maybeSet("phone", extractPhone(joined));
-  maybeSet("dob", extractDob(joined));
-  maybeSetSelect("nationality", extractInlineValue(joined, [/nationality\s*[:\-]?\s*([^\n]+)/i]), natOpts);
-  maybeSetSelect("country", extractInlineValue(joined, [/(?:country|current country)\s*[:\-]?\s*([^\n]+)/i]), ctrOpts);
-  maybeSet("city", extractInlineValue(joined, [/(?:city|town)\s*[:\-]?\s*([^\n]+)/i]));
-  maybeSet("skills", extractSectionValue(lines, [/^skills$/i, /^core skills$/i, /^technical skills$/i]));
-  maybeSet("certs", extractSectionValue(lines, [/^certifications$/i, /^certification$/i, /^licenses$/i, /^licences$/i]));
-  maybeSet("education", extractSectionValue(lines, [/^education$/i, /^academic background$/i, /^qualifications$/i], " ", 3));
-  maybeSet("languages", extractSectionValue(lines, [/^languages$/i], ", ", 5));
-
-  const experience = extractExperienceFields(lines);
-  maybeSet("job1Title", experience.job1Title);
-  maybeSet("job1Company", experience.job1Company);
-  maybeSet("job1Dates", experience.job1Dates);
-
-  persistDraft();
-  return filled;
-}
-
 let tesseractLoadPromise = null;
 let pdfJsLoadPromise = null;
 
@@ -2595,64 +2528,6 @@ function backFromScanReview() {
   window.scrollTo(0, 0);
 }
 
-async function openOcrImport() {
-  const fileInput = document.getElementById("ocrFile");
-  setStatusMessage("Loading the free OCR engine...");
-  ensureTesseractReady().catch(err => {
-    setStatusMessage(`OCR is not available right now: ${err.message}`, "error");
-  });
-
-  if (fileInput) {
-    fileInput.value = "";
-    fileInput.click();
-  }
-}
-
-async function handleOcrFile(event) {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  const btn = document.getElementById("importBtn");
-  const fileInput = document.getElementById("ocrFile");
-  try {
-    await ensureTesseractReady();
-  } catch (err) {
-    setStatusMessage(`OCR is not available right now: ${err.message}`, "error");
-    if (fileInput) fileInput.value = "";
-    return;
-  }
-
-  if (btn) btn.disabled = true;
-  setStatusMessage("Reading your resume locally with free OCR. This can take a moment...");
-
-  try {
-    const result = await Tesseract.recognize(file, "eng", {
-      logger: m => {
-        if (!m || typeof m.progress !== "number") return;
-        const pct = Math.max(0, Math.min(100, Math.round(m.progress * 100)));
-        if (m.status) {
-          setStatusMessage(`Reading your resume locally with free OCR... ${pct}%`);
-        }
-      },
-    });
-
-    const filled = applyOcrAutofill(result.data.text || "");
-    render();
-
-    if (filled.length) {
-      const labels = filled.map(key => getSteps().find(s => s.k === key)?.label || key);
-      setStatusMessage(`Autofilled ${filled.length} field${filled.length > 1 ? "s" : ""}: ${labels.join(", ")}. Please review before continuing.`, "success");
-    } else {
-      setStatusMessage("OCR finished, but it did not find enough fields to autofill. You can keep filling manually.", "info");
-    }
-  } catch (err) {
-    setStatusMessage(`OCR failed: ${err.message}`, "error");
-  } finally {
-    if (btn) btn.disabled = false;
-    if (fileInput) fileInput.value = "";
-  }
-}
-
 // ── Submit ─────────────────────────────────────────────────────────────────────
 async function submitResume() {
   applyPartnerContext();
@@ -2736,8 +2611,6 @@ function escHtml(str) {
 restoreDraft();
 if (currentStep < 0 || currentStep > getSteps().length) currentStep = 0;
 document.getElementById("langSel").value = lang;
-document.getElementById("ocrFile").addEventListener("change", handleOcrFile);
-document.getElementById("importBtn").title = "Upload a resume image to autofill common fields";
 renderContextBanner();
 render();
 
