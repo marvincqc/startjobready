@@ -1301,31 +1301,7 @@ function applyPartnerContext() {
 }
 
 function renderContextBanner() {
-  const el = document.getElementById("contextBanner");
-  if (!el) return;
-  if (!hasPartnerContext()) {
-    el.className = "context-banner";
-    el.innerHTML = "";
-    return;
-  }
-
-  const taggedVia = [PARTNER_CONTEXT.partnerAgency, PARTNER_CONTEXT.partnerCountry].filter(Boolean).join(" • ");
-  const bodyParts = [];
-  if (PARTNER_CONTEXT.agency) {
-    bodyParts.push(`This application is already routed to <strong>${escHtml(PARTNER_CONTEXT.agency)}</strong>.`);
-  }
-  if (taggedVia) {
-    bodyParts.push(`It will also be tagged to <strong>${escHtml(taggedVia)}</strong>.`);
-  }
-  if (PARTNER_CONTEXT.partnerLinkCode) {
-    bodyParts.push(`Reference code: <strong>${escHtml(PARTNER_CONTEXT.partnerLinkCode)}</strong>.`);
-  }
-
-  el.className = "context-banner show";
-  el.innerHTML = `
-    <strong>Agency link detected</strong>
-    <span>${bodyParts.join(" ")}</span>
-  `;
+  // Context is tracked internally for routing but not shown to workers.
 }
 
 function persistDraft() {
