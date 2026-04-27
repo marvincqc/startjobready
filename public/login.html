@@ -133,7 +133,12 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 24px; }
 (function () {
   const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-  const next = new URLSearchParams(window.location.search).get("next") || "/dashboard";
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next") || "/dashboard";
+
+  if (params.get("oauth_error")) {
+    showMsg("Sign-in failed — the session may have expired. Please try again.", "error");
+  }
 
   // Redirect if already signed in
   sb.auth.getSession().then(({ data: { session } }) => {

@@ -709,6 +709,14 @@ img { display: block; width: 100%; height: 100%; object-fit: cover; }
 </footer>
 
 <script>
+// If Supabase bounced an OAuth error back to the site root, forward to login with a message
+(function () {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get("error")) {
+    window.location.replace("/login?oauth_error=1");
+  }
+})();
+
 const STORAGE_KEY = "startjobready:wizard:v2";
 
 function getSavedDraft() {
