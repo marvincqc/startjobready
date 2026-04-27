@@ -78,6 +78,32 @@ tr:hover td { background: #fafaf9; }
 .btn-more:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .blocked { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: var(--muted); font-size: 15px; }
+
+/* Drawer */
+.drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(13,27,39,0.35); z-index: 200; }
+.drawer-overlay.open { display: flex; align-items: stretch; justify-content: flex-end; }
+.drawer { background: #fff; width: min(480px, 100vw); height: 100vh; overflow-y: auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 0; }
+.drawer-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.drawer-title { font-family: "Fraunces", serif; font-size: 22px; letter-spacing: -0.03em; line-height: 1.2; }
+.drawer-close { width: 32px; height: 32px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; cursor: pointer; font-size: 16px; display: grid; place-items: center; flex-shrink: 0; }
+.drawer-section { margin-bottom: 20px; }
+.drawer-label { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.drawer-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.drawer-field { background: var(--bg); border-radius: 10px; padding: 10px 12px; }
+.drawer-field-key { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+.drawer-field-val { font-size: 13px; font-weight: 700; }
+.drawer-data { font-size: 12px; background: var(--bg); border-radius: 10px; padding: 12px; overflow-x: auto; white-space: pre-wrap; line-height: 1.6; color: #32414f; max-height: 260px; overflow-y: auto; }
+.btn-download { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--ink); color: #fff; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.btn-download:hover { background: #1c3447; }
+.sub-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.1s; }
+.sub-row:last-child { border-bottom: none; }
+.sub-row:hover { background: #fafaf9; }
+.sub-avatar { width: 36px; height: 36px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); display: grid; place-items: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+.sub-info { flex: 1; min-width: 0; }
+.sub-name { font-size: 14px; font-weight: 700; }
+.sub-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.sub-agency { font-size: 11px; font-weight: 700; color: var(--brand); background: #fff0eb; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+.sub-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -136,6 +162,18 @@ tr:hover td { background: #fafaf9; }
   </div>
 
 </div><!-- /page -->
+
+<!-- Submission drawer -->
+<div class="drawer-overlay" id="drawerOverlay">
+  <div class="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title" id="drawerName">Loading…</div>
+      <button class="drawer-close" id="drawerClose">✕</button>
+    </div>
+    <div id="drawerBody"></div>
+  </div>
+</div>
+
 </div><!-- /app -->
 
 <script>
@@ -144,6 +182,7 @@ tr:hover td { background: #fafaf9; }
   let token = null;
   let nextCursor = null;
   let loadingMore = false;
+  let agencyNameMap = {}; // agency_id → name, populated after agencies load
 
   function auth() { return { Authorization: "Bearer " + token }; }
   function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -196,6 +235,8 @@ tr:hover td { background: #fafaf9; }
       el.innerHTML = `<div class="empty">No agencies yet.</div>`;
       return;
     }
+
+    agencyNameMap = Object.fromEntries(json.agencies.map(a => [a.id, a.name]));
 
     const rows = json.agencies.map(a => `
       <tr id="agency-row-${esc(a.id)}">
@@ -253,27 +294,27 @@ tr:hover td { background: #fafaf9; }
       }
 
       if (!cursor) {
-        el.innerHTML = `
-          <table>
-            <thead><tr>
-              <th>Name</th><th>Nationality</th><th>Job type</th><th>Attachments</th><th>Submitted</th><th></th>
-            </tr></thead>
-            <tbody id="subBody"></tbody>
-          </table>`;
+        el.innerHTML = `<div id="subList"></div>`;
       }
 
-      const tbody = document.getElementById("subBody");
+      const list = document.getElementById("subList");
       json.submissions.forEach(s => {
-        const tr = document.createElement("tr");
-        tr.id = "sub-row-" + s.id;
-        tr.innerHTML = `
-          <td><strong>${esc(s.worker_name || "—")}</strong></td>
-          <td>${esc(s.nationality || "—")}</td>
-          <td>${esc(s.job_type || "—")}</td>
-          <td>${s.attachment_count || 0}</td>
-          <td style="color:var(--muted)">${fmt(s.created_at)}</td>
-          <td><button class="btn-del" onclick="deleteSubmission('${esc(s.id)}')">Delete</button></td>`;
-        tbody.appendChild(tr);
+        const name = s.worker_name || "Unknown";
+        const initials = name.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
+        const div = document.createElement("div");
+        div.className = "sub-row";
+        div.id = "sub-row-" + s.id;
+        div.innerHTML = `
+          <div class="sub-avatar">${esc(initials)}</div>
+          <div class="sub-info">
+            <div class="sub-name">${esc(name)}</div>
+            <div class="sub-meta">${esc(s.nationality || "—")} · ${esc(s.job_type || "—")}</div>
+          </div>
+          <div class="sub-agency">${esc(agencyNameMap[s.agency_id] || "Unknown")}</div>
+          <div class="sub-date">${fmt(s.created_at)}</div>
+          <button class="btn-del" onclick="event.stopPropagation();deleteSubmission('${esc(s.id)}')">Delete</button>`;
+        div.addEventListener("click", () => openDrawer(s.id));
+        list.appendChild(div);
       });
     } finally {
       loadingMore = false;
@@ -292,6 +333,72 @@ tr:hover td { background: #fafaf9; }
     document.getElementById("sub-row-" + id)?.remove();
     refreshStats();
   };
+
+  // ── Drawer ──────────────────────────────────────────────────────────────────
+  async function openDrawer(id) {
+    const overlay = document.getElementById("drawerOverlay");
+    const body    = document.getElementById("drawerBody");
+    document.getElementById("drawerName").textContent = "Loading…";
+    body.innerHTML = `<div class="spinner"></div>`;
+    overlay.classList.add("open");
+
+    const res  = await fetch(`/api/submissions/${encodeURIComponent(id)}`, { headers: auth() });
+    const json = await res.json();
+    if (!json.ok) { body.innerHTML = `<p style="color:var(--danger)">${esc(json.error)}</p>`; return; }
+
+    const s    = json.submission;
+    const name = s.worker_name || "Unknown";
+    document.getElementById("drawerName").textContent = name;
+
+    const agencyName = agencyNameMap[s.agency_id] || "—";
+    const date = new Date(s.created_at).toLocaleString("en-SG");
+    const fields = [
+      { k: "Agency",       v: agencyName },
+      { k: "Nationality",  v: s.nationality },
+      { k: "Job type",     v: s.job_type },
+      { k: "Submitted",    v: date },
+      { k: "Attachments",  v: s.attachment_count || 0 },
+    ];
+
+    const pdfUrl = s.pdf_path
+      ? `/api/pdf/${s.pdf_path.split("/").pop()}?token=${encodeURIComponent(token)}`
+      : null;
+
+    // Build readable field list from submission data object
+    const dataFields = s.data ? Object.entries(s.data)
+      .filter(([, v]) => v !== null && v !== undefined && v !== "")
+      .map(([k, v]) => `<div class="drawer-field"><div class="drawer-field-key">${esc(k)}</div><div class="drawer-field-val">${esc(String(v))}</div></div>`)
+      .join("") : "";
+
+    body.innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-label">Summary</div>
+        <div class="drawer-fields">
+          ${fields.map(f => `<div class="drawer-field"><div class="drawer-field-key">${esc(f.k)}</div><div class="drawer-field-val">${esc(String(f.v ?? "—"))}</div></div>`).join("")}
+        </div>
+      </div>
+      ${dataFields ? `
+      <div class="drawer-section">
+        <div class="drawer-label">All fields</div>
+        <div class="drawer-fields">${dataFields}</div>
+      </div>` : ""}
+      ${pdfUrl ? `
+      <div class="drawer-section">
+        <a class="btn-download" href="${esc(pdfUrl)}" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download resume PDF
+        </a>
+      </div>` : ""}
+    `;
+  }
+
+  document.getElementById("drawerClose").addEventListener("click", () => {
+    document.getElementById("drawerOverlay").classList.remove("open");
+  });
+  document.getElementById("drawerOverlay").addEventListener("click", e => {
+    if (e.target === document.getElementById("drawerOverlay"))
+      document.getElementById("drawerOverlay").classList.remove("open");
+  });
 
   // ── Stats refresh ───────────────────────────────────────────────────────────
   async function refreshStats() {
