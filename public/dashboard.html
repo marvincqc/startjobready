@@ -292,6 +292,7 @@ a { color: inherit; text-decoration: none; }
   const hasPendingOAuth = new URLSearchParams(window.location.search).has("code");
   let booted = false;
   sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_OUT") { window.location.replace("/login"); return; }
     if (session) token = session.access_token; // always keep token fresh
     if (booted) return;
     if (!session) {
@@ -358,9 +359,8 @@ a { color: inherit; text-decoration: none; }
   });
 
   // ── Sign out ────────────────────────────────────────────────────────────────
-  document.getElementById("signOutBtn").addEventListener("click", async () => {
-    await sb.auth.signOut();
-    window.location.replace("/login");
+  document.getElementById("signOutBtn").addEventListener("click", () => {
+    sb.auth.signOut().catch(() => {}); // fire-and-forget; SIGNED_OUT event handles the redirect
   });
 
   // ── Submissions ─────────────────────────────────────────────────────────────

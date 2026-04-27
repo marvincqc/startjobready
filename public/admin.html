@@ -192,7 +192,8 @@ tr:hover td { background: #fafaf9; }
   }
 
   // ── Auth ────────────────────────────────────────────────────────────────────
-  sb.auth.onAuthStateChange(async (event, session) => {
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT") { window.location.replace("/login"); return; }
     if (session) token = session.access_token;
   });
 
@@ -220,9 +221,8 @@ tr:hover td { background: #fafaf9; }
     loadSubmissions();
   });
 
-  document.getElementById("signOutBtn").addEventListener("click", async () => {
-    await sb.auth.signOut();
-    window.location.replace("/login");
+  document.getElementById("signOutBtn").addEventListener("click", () => {
+    sb.auth.signOut().catch(() => {}); // fire-and-forget; SIGNED_OUT event handles the redirect
   });
 
   // ── Agencies ────────────────────────────────────────────────────────────────
