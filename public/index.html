@@ -1097,9 +1097,10 @@ const TR = {
     errDate: "Please enter dates, e.g. Jan 2022 – Mar 2024",
     steps: [
       { k:"agency",      ic:"🏬", label:"Agency",      q:"Which manpower agency is this resume for?",                      hint:"Type the agency name exactly as given to you.",                              type:"text",  ph:"e.g. Worklink Manpower Pte Ltd" },
+      { k:"scanDoc",     ic:"📄", label:"Scan document",q:"Want to fill the form faster?",                                   hint:"Upload a photo or PDF of your passport, resume, or ID. We'll read it and pre-fill your details. Everything runs in your browser — nothing leaves your device until you submit.", type:"scan",  optional:true },
       { k:"name",        ic:"👤", label:"Full name",    q:"What is your full name?",                                        hint:"Enter your full legal name.",                                               type:"text",  ph:"e.g. Ahmad bin Ramli" },
       { k:"dob",         ic:"🎂", label:"Date of birth",q:"What is your date of birth?",                                   hint:"Pick your date from the calendar.",                                         type:"text",  control:"date", validate:"dob" },
-      { k:"nationality", ic:"🌏", label:"Nationality",  q:"What is your nationality?",                                     hint:"Select the country that issued your passport.",                             type:"select", opts:["🇲🇾 Malaysian","🇨🇳 Chinese","🇧🇩 Bangladeshi","🇮🇳 Indian","🇱🇰 Sri Lankan","🇹🇭 Thai","🇲🇲 Myanmarese","🇵🇭 Filipino","🇮🇩 Indonesian","🇺🇸 American","🇬🇧 British","🇦🇺 Australian","🌍 Other"] },
+      { k:"nationality", ic:"🌏", label:"Nationality",  q:"What is your nationality?",                                     hint:"Select the country that issued your passport.",                             type:"select", opts:["🇸🇬 Singaporean","🇲🇾 Malaysian","🇨🇳 Chinese","🇧🇩 Bangladeshi","🇮🇳 Indian","🇱🇰 Sri Lankan","🇹🇭 Thai","🇲🇲 Myanmarese","🇵🇭 Filipino","🇮🇩 Indonesian","🇺🇸 American","🇬🇧 British","🇦🇺 Australian","🌍 Other"] },
       { k:"country",     ic:"📍", label:"Country",      q:"Which country are you currently living in?",                    hint:"Select your current country of residence.",                                 type:"select", opts:["🇲🇾 Malaysia","🇨🇳 China","🇧🇩 Bangladesh","🇮🇳 India","🇱🇰 Sri Lanka","🇹🇭 Thailand","🇲🇲 Myanmar","🇵🇭 Philippines","🇮🇩 Indonesia","🇸🇬 Singapore","🇺🇸 United States","🇬🇧 United Kingdom","🇦🇺 Australia","🌍 Other"] },
       { k:"city",        ic:"🏙", label:"City",         q:"Which city or town are you in?",                                hint:"",                                                                          type:"text",  ph:"e.g. Kuala Lumpur" },
       { k:"phone",       ic:"📞", label:"Phone",        q:"What is your phone number?",                                    hint:"Include your country code. Example: +60 12-345 6789",                       type:"text",  ph:"e.g. +60 12-345 6789", validate:"phone" },
@@ -1268,6 +1269,8 @@ let editingKey = null;
 let lastSubmitResult = null;
 let attachments = [];
 let restoredDraft = false;
+let scanPhase = "upload"; // "upload" | "review"
+let scanExtracted = {};
 
 function t(key, ...args) {
   const L = TR[lang] ?? TR.en;
@@ -1755,6 +1758,14 @@ function render() {
     `;
   }
 
+  if (s.type === "scan") {
+    card.innerHTML = scanPhase === "upload" ? buildScanUploadHtml() : buildScanReviewHtml();
+    wizard.appendChild(card);
+    const scanFileInput = document.getElementById("scanFileInput");
+    if (scanFileInput) scanFileInput.addEventListener("change", handleScanFile);
+    return;
+  }
+
   card.innerHTML = inner;
   wizard.appendChild(card);
 
@@ -1981,6 +1992,8 @@ function goNext() {
   const s = steps[currentStep];
   const agencyLocked = s.k === "agency" && PARTNER_CONTEXT.lockAgency && Boolean(PARTNER_CONTEXT.agency);
 
+  if (s.type === "scan") { skipScan(); return; }
+
   if (s.type === "text") {
     const field = document.getElementById("mainField");
     const rangeStart = document.getElementById("rangeStart");
@@ -2055,6 +2068,12 @@ function advance() {
 
 function goBack() {
   if (editingKey) { editingKey = null; currentStep = getSteps().length; render(); return; }
+  if (getSteps()[currentStep]?.type === "scan" && scanPhase === "review") {
+    scanPhase = "upload";
+    render();
+    window.scrollTo(0, 0);
+    return;
+  }
   if (currentStep <= 0) return;
   const steps = getSteps();
   currentStep--;
@@ -2335,6 +2354,7 @@ function applyOcrAutofill(text) {
 }
 
 let tesseractLoadPromise = null;
+let pdfJsLoadPromise = null;
 
 function ensureTesseractReady() {
   if (window.Tesseract) return Promise.resolve();
@@ -2350,6 +2370,229 @@ function ensureTesseractReady() {
   });
 
   return tesseractLoadPromise;
+}
+
+function ensurePdfJsReady() {
+  if (window.pdfjsLib) return Promise.resolve();
+  if (pdfJsLoadPromise) return pdfJsLoadPromise;
+
+  pdfJsLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.async = true;
+    script.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      resolve();
+    };
+    script.onerror = () => reject(new Error("Unable to load PDF support."));
+    document.head.appendChild(script);
+  });
+
+  return pdfJsLoadPromise;
+}
+
+// ── Scan document step ────────────────────────────────────────────────────────
+
+const SCAN_REVIEW_FIELDS = [
+  { k:"name",        label:"Full name",             ic:"👤" },
+  { k:"dob",         label:"Date of birth",         ic:"🎂" },
+  { k:"nationality", label:"Nationality",           ic:"🌏" },
+  { k:"phone",       label:"Phone number",          ic:"📞" },
+  { k:"email",       label:"Email address",         ic:"📧" },
+  { k:"city",        label:"City",                  ic:"🏙" },
+  { k:"skills",      label:"Skills",                ic:"🔧" },
+  { k:"job1Title",   label:"Most recent job title", ic:"🏢" },
+  { k:"job1Company", label:"Most recent employer",  ic:"🏢" },
+];
+
+function buildScanUploadHtml() {
+  const s = getSteps()[currentStep];
+  return `
+    <div class="step-icon">${s.ic}</div>
+    <div class="step-label">${s.label}</div>
+    <div class="step-q">${s.q}</div>
+    <div class="step-hint" style="margin-bottom:24px;">${s.hint}</div>
+    <input type="file" id="scanFileInput" accept="image/*,.pdf" style="display:none">
+    <button class="btn-next" id="scanPickBtn" type="button" onclick="triggerScanFile()"
+      style="width:100%;height:52px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px;">
+      📷&nbsp; Choose photo or PDF
+    </button>
+    <div id="scanStatus" style="min-height:28px;font-size:13px;color:var(--muted);margin-top:12px;text-align:center;line-height:1.5;"></div>
+    <div class="nav" style="margin-top:8px;">
+      <button class="btn-back" onclick="goBack()">← Back</button>
+      <a href="#" onclick="skipScan(); return false;"
+        style="font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;align-self:center;">
+        Skip this step →
+      </a>
+    </div>
+  `;
+}
+
+function buildScanReviewHtml() {
+  const hasAny = SCAN_REVIEW_FIELDS.some(f => scanExtracted[f.k]);
+
+  let fieldsHtml = "";
+  if (!hasAny) {
+    fieldsHtml = `
+      <div style="background:var(--error-light);border:1px solid #fbd5c3;border-radius:14px;padding:16px 18px;margin-bottom:20px;font-size:14px;color:var(--error);line-height:1.6;">
+        We couldn't read much from that document. Try a clearer photo, or
+        <a href="#" onclick="backFromScanReview(); return false;" style="color:var(--error);font-weight:700;">try again</a>.
+      </div>
+    `;
+  } else {
+    fieldsHtml = `<div style="margin-bottom:20px;">`;
+    SCAN_REVIEW_FIELDS.forEach(f => {
+      const val = escHtml(scanExtracted[f.k] || "");
+      const bg = val ? "#fff" : "var(--bg-alt, #f5f2ec)";
+      fieldsHtml += `
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">${f.ic} ${f.label}</label>
+          <input id="scanReview_${f.k}" class="field" type="text" value="${val}" placeholder="Not found" style="background:${bg};">
+        </div>
+      `;
+    });
+    fieldsHtml += `</div>`;
+  }
+
+  return `
+    <div class="step-icon">✅</div>
+    <div class="step-label">Review scanned details</div>
+    <div class="step-q">Here's what we found.</div>
+    <div class="step-hint" style="margin-bottom:20px;">Edit anything that looks wrong, then tap <strong>Use these details</strong> to continue. Blank fields can be filled in the next steps.</div>
+    ${fieldsHtml}
+    <div class="nav">
+      <button class="btn-back" onclick="backFromScanReview()">← Back</button>
+      ${hasAny ? `<button class="btn-next" onclick="applyScanDetails()">Use these details →</button>` : ""}
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <a href="#" onclick="skipScan(); return false;"
+        style="font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;">
+        Skip and enter manually
+      </a>
+    </div>
+  `;
+}
+
+function setScanStatus(msg, type) {
+  const el = document.getElementById("scanStatus");
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type === "error" ? "var(--error)" : type === "success" ? "var(--success)" : "var(--muted)";
+}
+
+function triggerScanFile() {
+  const input = document.getElementById("scanFileInput");
+  if (!input) return;
+  input.value = "";
+  input.click();
+}
+
+async function handleScanFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const pickBtn = document.getElementById("scanPickBtn");
+  if (pickBtn) pickBtn.disabled = true;
+
+  try {
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    let ocrText = "";
+
+    if (isPdf) {
+      setScanStatus("Loading PDF support…");
+      await ensurePdfJsReady();
+      await ensureTesseractReady();
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pageCount = Math.min(pdf.numPages, 3);
+      for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+        setScanStatus(`Reading PDF, page ${pageNum} of ${pageCount}…`);
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 2.0 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        const result = await Tesseract.recognize(canvas, "eng", {
+          logger: m => {
+            if (m?.progress && m.status)
+              setScanStatus(`Reading PDF, page ${pageNum} of ${pageCount}… ${Math.round(m.progress * 100)}%`);
+          },
+        });
+        ocrText += result.data.text + "\n";
+      }
+    } else {
+      setScanStatus("Loading the free OCR engine…");
+      await ensureTesseractReady();
+      const result = await Tesseract.recognize(file, "eng", {
+        logger: m => {
+          if (m?.progress && m.status)
+            setScanStatus(`Reading your document… ${Math.round(m.progress * 100)}%`);
+        },
+      });
+      ocrText = result.data.text || "";
+    }
+
+    scanExtracted = extractFieldsFromText(ocrText);
+    scanPhase = "review";
+    render();
+    window.scrollTo(0, 0);
+  } catch (err) {
+    setScanStatus(`Could not read this file: ${err.message}. Try a different file or skip this step.`, "error");
+    if (pickBtn) pickBtn.disabled = false;
+  } finally {
+    const input = document.getElementById("scanFileInput");
+    if (input) input.value = "";
+  }
+}
+
+function extractFieldsFromText(text) {
+  const normalized = normalizeOcrText(text);
+  const lines = normalized.split(/\n+/).map(cleanOcrLine).filter(Boolean);
+  const joined = lines.join(" ");
+
+  const steps = getSteps();
+  const natOpts = (steps.find(s => s.k === "nationality") || {}).opts || [];
+
+  const exp = extractExperienceFields(lines);
+
+  return {
+    name:        extractLikelyName(lines),
+    dob:         extractDob(joined),
+    nationality: matchSelectOption(cleanOcrLine(extractInlineValue(joined, [/nationality\s*[:\-]?\s*([^\n]+)/i])), natOpts),
+    phone:       extractPhone(joined),
+    email:       extractEmail(joined),
+    city:        cleanOcrLine(extractInlineValue(joined, [/(?:city|town)\s*[:\-]?\s*([^\n]+)/i])),
+    skills:      extractSectionValue(lines, [/^skills$/i, /^core skills$/i, /^technical skills$/i]),
+    job1Title:   exp.job1Title || "",
+    job1Company: exp.job1Company || "",
+  };
+}
+
+function applyScanDetails() {
+  SCAN_REVIEW_FIELDS.forEach(f => {
+    const input = document.getElementById(`scanReview_${f.k}`);
+    if (!input) return;
+    const val = input.value.trim();
+    if (val) data[f.k] = val;
+  });
+  persistDraft();
+  scanPhase = "upload";
+  scanExtracted = {};
+  advance();
+}
+
+function skipScan() {
+  scanPhase = "upload";
+  scanExtracted = {};
+  advance();
+}
+
+function backFromScanReview() {
+  scanPhase = "upload";
+  render();
+  window.scrollTo(0, 0);
 }
 
 async function openOcrImport() {
