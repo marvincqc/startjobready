@@ -268,7 +268,7 @@ tr:hover td { background: #fafaf9; }
         <td style="color:var(--muted)">${esc(a.slug)}</td>
         <td>${esc(a.email || "—")}</td>
         <td>
-          <select class="plan-select plan-${esc(plan)}" data-id="${esc(a.id)}" onchange="changePlan(this)">
+          <select class="plan-select plan-${esc(plan)}" data-id="${esc(a.id)}" data-prev="${esc(plan)}" onchange="changePlan(this)">
             <option value="free"${plan==="free"?" selected":""}>Free</option>
             <option value="pro"${plan==="pro"?" selected":""}>Pro</option>
             <option value="scale"${plan==="scale"?" selected":""}>Scale</option>

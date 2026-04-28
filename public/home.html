@@ -757,7 +757,10 @@ if (handleResetFlag()) {
 
 // If agency is signed in, point CTAs to dashboard and skip draft logic
 const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+// Hide CTAs immediately to avoid flash of wrong text while session resolves
+[navCta, heroCta, footerCta].forEach(el => { if (el) el.style.visibility = "hidden"; });
 sb.auth.getSession().then(({ data: { session } }) => {
+  [navCta, heroCta, footerCta].forEach(el => { if (el) el.style.visibility = ""; });
   if (session) {
     navCta.textContent  = "Dashboard";
     navCta.href         = "/dashboard";
