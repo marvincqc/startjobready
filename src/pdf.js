@@ -419,4 +419,4 @@ async function generateAndStorePDF(data, submissionId, attachments = []) {
   };
 }
 
-module.exports = { generateAndStorePDF };
+module.exports = { generateAndStorePDF, buildPDF };

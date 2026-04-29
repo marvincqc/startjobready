@@ -10,7 +10,7 @@ const { pipeline } = require("stream/promises");
 require("dotenv").config();
 
 const { createClient } = require("@supabase/supabase-js");
-const { generateAndStorePDF } = require("./src/pdf");
+const { generateAndStorePDF, buildPDF } = require("./src/pdf");
 const packageInfo = require("./package.json");
 
 // Supabase admin client (service role for server-side inserts + JWT validation)
@@ -316,31 +316,20 @@ app.get("/api/pdf/download", async (req, res) => {
 
   const { data: sub } = await supabase
     .from("submissions")
-    .select("pdf_path")
+    .select("data")
     .eq("id", submissionId)
     .eq("agency_id", agency.id)
     .maybeSingle();
-  if (!sub) return res.status(404).json({ ok: false, stage: "lookup", error: "Submission not found" });
-  if (!sub.pdf_path) return res.status(404).json({ ok: false, stage: "pdf_path", error: "No PDF path stored for this submission" });
+  if (!sub) return res.status(404).json({ ok: false, error: "Submission not found" });
+  if (!sub.data) return res.status(404).json({ ok: false, error: "No data stored for this submission" });
 
-  console.log(`PDF download: submission ${submissionId}, path: ${sub.pdf_path}`);
-
-  // Try Supabase Storage first (persistent, survives deploys)
-  const { data: signed, error: signErr } = await supabase.storage
-    .from("Resumes")
-    .createSignedUrl(sub.pdf_path, 60 * 60); // 1-hour link
-
-  console.log(`PDF signed URL: ok=${!signErr} err=${signErr?.message} url=${signed?.signedUrl?.slice(0,60)}`);
-
-  if (!signErr && signed?.signedUrl) {
-    return res.redirect(302, signed.signedUrl);
-  }
-
-  // Fallback: local file (dev only — not reliable on Render)
-  const localPath = path.join(resumeOutputDir, ...sub.pdf_path.replace(/^resume_output[\\/]/, "").split("/"));
-  res.sendFile(localPath, err => {
-    if (err && !res.headersSent) res.status(404).json({ ok: false, stage: "storage", error: signErr?.message || "Storage error", path: sub.pdf_path });
-  });
+  // Regenerate PDF on the fly from stored submission data — no Storage dependency
+  const workerName = (sub.data.name || "resume").replace(/[^a-z0-9_\- ]/gi, "").trim().replace(/\s+/g, "_") || "resume";
+  const pdfBuffer = await buildPDF(sub.data);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${workerName}_resume.pdf"`);
+  res.setHeader("Content-Length", pdfBuffer.length);
+  res.send(pdfBuffer);
 });
 
 // Legacy route kept so old links don't hard-404
