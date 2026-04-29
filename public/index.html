@@ -1197,6 +1197,10 @@ function cleanContextValue(value) {
 }
 
 function buildCurrentResumeUrl() {
+  // If we have a partner link code, always use the clean /apply/ URL
+  if (PARTNER_CONTEXT && PARTNER_CONTEXT.partnerLinkCode) {
+    return `/apply/${encodeURIComponent(PARTNER_CONTEXT.partnerLinkCode)}`;
+  }
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
