@@ -41,10 +41,6 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 24px; }
 .card h1 { font-family: "Fraunces", serif; font-size: 30px; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 8px; }
 .card-sub { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
 
-.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
-.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-.divider span { font-size: 12px; color: var(--muted); font-weight: 600; }
-
 .btn-google {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; height: 48px; border-radius: 999px;
@@ -54,27 +50,6 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 24px; }
 }
 .btn-google:hover { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(200,94,56,0.10); }
 .btn-google svg { flex-shrink: 0; }
-
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-.form-group input {
-  width: 100%; height: 48px; padding: 0 16px;
-  border: 1.5px solid var(--line); border-radius: 12px;
-  font-family: "Plus Jakarta Sans", sans-serif; font-size: 14px; color: var(--ink);
-  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-}
-.form-group input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(200,94,56,0.10); }
-
-.btn-submit {
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 52px; border-radius: 999px;
-  background: var(--brand); color: #fff;
-  font-family: "Plus Jakarta Sans", sans-serif; font-size: 15px; font-weight: 700;
-  border: none; cursor: pointer; margin-top: 8px;
-  transition: background 0.15s;
-}
-.btn-submit:hover { background: var(--brand-dark); }
-.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .msg { font-size: 13px; padding: 12px 14px; border-radius: 10px; margin-top: 14px; }
 .msg.error { background: #fff5f5; border: 1px solid #fed7d7; color: #c53030; }
@@ -109,23 +84,7 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 24px; }
         Continue with Google
       </button>
 
-      <div class="divider"><span>or use email</span></div>
-
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" placeholder="you@agency.com" required autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="password" style="display:flex;align-items:center;justify-content:space-between;">
-            Password
-            <a href="/password-reset" style="font-size:12px;font-weight:600;color:var(--brand);">Forgot password?</a>
-          </label>
-          <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
-        </div>
-        <div id="loginMsg"></div>
-        <button type="submit" class="btn-submit" id="loginBtn">Sign in</button>
-      </form>
+      <div id="loginMsg"></div>
 
       <div class="card-footer">No account yet? <a href="/register">Register your agency</a></div>
     </div>
@@ -155,23 +114,6 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 24px; }
       options: { redirectTo: window.location.origin + "/auth/callback" },
     });
     if (error) showMsg(error.message, "error");
-  });
-
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("email").value.trim();
-    const pass  = document.getElementById("password").value;
-    const btn   = document.getElementById("loginBtn");
-
-    btn.disabled = true; btn.textContent = "Signing in…";
-
-    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) {
-      btn.disabled = false; btn.textContent = "Sign in";
-      return showMsg(error.message, "error");
-    }
-
-    window.location.replace(next);
   });
 
   function showMsg(text, type) {
