@@ -10,8 +10,35 @@ const { pipeline } = require("stream/promises");
 require("dotenv").config();
 
 const { createClient } = require("@supabase/supabase-js");
+const { Resend } = require("resend");
 const { generateAndStorePDF, buildPDF } = require("./src/pdf");
 const packageInfo = require("./package.json");
+
+// Resend email client — gracefully no-ops if API key not set
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+async function sendSubmissionEmail(agency, workerName, submissionId) {
+  if (!resend || !agency.contact_email) return;
+  const dashboardUrl = `${process.env.APP_URL || "https://startjobready.onrender.com"}/dashboard`;
+  try {
+    await resend.emails.send({
+      from: "JobReady <notifications@jobready.sg>",
+      to: agency.contact_email,
+      subject: `New application from ${workerName || "a worker"}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+          <h2 style="margin:0 0 8px;">New application received</h2>
+          <p style="color:#555;margin:0 0 20px;">
+            <strong>${workerName || "A worker"}</strong> just submitted an application to <strong>${agency.name}</strong>.
+          </p>
+          <a href="${dashboardUrl}" style="display:inline-block;padding:12px 24px;background:#c85e38;color:#fff;border-radius:999px;text-decoration:none;font-weight:700;">View in dashboard</a>
+          <p style="color:#aaa;font-size:12px;margin-top:24px;">Reference: ${submissionId}</p>
+        </div>`,
+    });
+  } catch (e) {
+    console.warn("Email send failed (non-fatal):", e.message);
+  }
+}
 
 // Supabase admin client (service role for server-side inserts + JWT validation)
 // Lazy init so missing env vars don't crash the server on startup
@@ -440,10 +467,11 @@ app.get("/privacy", (_req, res) => res.sendFile(path.join(rootDir, "public", "pr
 app.get("/pricing", (_req, res) => res.sendFile(path.join(rootDir, "public", "pricing.html")));
 
 // ─── Auth pages ───────────────────────────────────────────────────────────────
-app.get("/register",       (_req, res) => res.sendFile(path.join(rootDir, "public", "register.html")));
-app.get("/login",          (_req, res) => res.sendFile(path.join(rootDir, "public", "login.html")));
-app.get("/dashboard",      (_req, res) => res.sendFile(path.join(rootDir, "public", "dashboard.html")));
-app.get("/auth/callback",  (_req, res) => res.sendFile(path.join(rootDir, "public", "auth", "callback.html")));
+app.get("/register",        (_req, res) => res.sendFile(path.join(rootDir, "public", "register.html")));
+app.get("/login",           (_req, res) => res.sendFile(path.join(rootDir, "public", "login.html")));
+app.get("/dashboard",       (_req, res) => res.sendFile(path.join(rootDir, "public", "dashboard.html")));
+app.get("/password-reset",  (_req, res) => res.sendFile(path.join(rootDir, "public", "password-reset.html")));
+app.get("/auth/callback",   (_req, res) => res.sendFile(path.join(rootDir, "public", "auth", "callback.html")));
 
 // ─── Supabase public config (safe to expose) ──────────────────────────────────
 app.get("/config.js", (_req, res) => {
@@ -657,6 +685,24 @@ app.get("/api/submissions/:id", requireAuth, async (req, res) => {
   res.json({ ok: true, submission: data });
 });
 
+app.delete("/api/submissions/:id", requireAuth, async (req, res) => {
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+  if (!agency) return res.status(403).json({ ok: false, error: "Forbidden" });
+
+  const { error } = await supabase
+    .from("submissions")
+    .delete()
+    .eq("id", req.params.id)
+    .eq("agency_id", agency.id);
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  res.json({ ok: true });
+});
+
 // Passport OCR was moved to the browser. Keep this route non-fatal for stale clients.
 app.all("/ocr-passport", (_req, res) => {
   res.status(410).json({
@@ -682,7 +728,7 @@ app.post("/submit", rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) =
     if (data.agency) {
       const { data: agencyRow } = await supabase
         .from("agencies")
-        .select("id, plan, name")
+        .select("id, plan, name, contact_email")
         .eq("slug", normalizeAgencyLinkSlug(data.agency))
         .maybeSingle();
       if (agencyRow) resolvedAgency = agencyRow;
@@ -727,7 +773,7 @@ app.post("/submit", rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) =
         if (linkRow) partnerLinkId = linkRow.id;
       }
 
-      await supabase.from("submissions").insert({
+      const { data: insertedRow } = await supabase.from("submissions").insert({
         agency_id: agencyId,
         partner_link_id: partnerLinkId,
         worker_name: data.name || null,
@@ -736,7 +782,11 @@ app.post("/submit", rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) =
         data,
         pdf_path: result.storagePath || null,
         attachment_count: result.attachmentCount || 0,
-      });
+      }).select("id").single();
+
+      if (resolvedAgency && insertedRow) {
+        sendSubmissionEmail(resolvedAgency, data.name, insertedRow.id);
+      }
     } catch (dbErr) {
       console.warn("Supabase submission record error (non-fatal):", dbErr.message);
     }
