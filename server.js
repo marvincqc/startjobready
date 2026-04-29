@@ -372,15 +372,8 @@ app.get("/apply/:slug", async (req, res) => {
         "This application link is no longer active. Please contact your agency for an updated link."
       ));
     }
-    const params = new URLSearchParams();
-    params.set("agency", dbLink.agencies.slug);
-    params.set("partnerLinkCode", dbLink.full_slug);
-    params.set("partnerLinkId", dbLink.id);
-    if (dbLink.partner_name) params.set("partnerAgency", dbLink.partner_name);
-    if (dbLink.partner_name) params.set("linkLabel", dbLink.partner_name);
-    if (dbLink.partner_country) params.set("partnerCountry", dbLink.partner_country);
-    if (dbLink.lock_agency) params.set("lockAgency", "1");
-    return res.redirect(`/resume?${params.toString()}`);
+    // Serve the form directly — keep the clean /apply/:slug URL in the browser
+    return res.sendFile(path.join(rootDir, "public", "index.html"));
   }
 
   // 2. Fall back to legacy agency-links.json
@@ -392,6 +385,29 @@ app.get("/apply/:slug", async (req, res) => {
     "Partner link not found",
     "This application link is not active or may have been typed incorrectly. Please ask your agency for the correct JobReady link."
   ));
+});
+
+// Public endpoint — resolves a partner link slug to form init data (no auth needed)
+app.get("/api/link/:slug", async (req, res) => {
+  const slug = normalizeAgencyLinkSlug(req.params.slug);
+  const { data: dbLink } = await supabase
+    .from("partner_links")
+    .select("id, full_slug, partner_name, partner_country, lock_agency, active, agencies(slug, name)")
+    .eq("full_slug", slug)
+    .maybeSingle();
+
+  if (!dbLink) return res.status(404).json({ ok: false, error: "Link not found" });
+  if (!dbLink.active) return res.status(410).json({ ok: false, error: "Link deactivated" });
+
+  res.json({
+    ok: true,
+    agency: dbLink.agencies.slug,
+    partnerLinkCode: dbLink.full_slug,
+    partnerLinkId: dbLink.id,
+    partnerAgency: dbLink.partner_name || null,
+    partnerCountry: dbLink.partner_country || null,
+    lockAgency: dbLink.lock_agency || false,
+  });
 });
 
 function linkErrorPage(title, message) {

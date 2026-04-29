@@ -1201,27 +1201,33 @@ function buildCurrentResumeUrl() {
 }
 
 function readPartnerContext() {
+  // If loaded via /apply/:slug, data was fetched and stored in window.__LINK_DATA__
+  const d = window.__LINK_DATA__;
+  if (d) {
+    return {
+      agency:          d.agency || "",
+      partnerAgency:   d.partnerAgency || "",
+      partnerCountry:  d.partnerCountry || "",
+      partnerLinkCode: d.partnerLinkCode || "",
+      partnerLinkLabel:d.partnerAgency || "",
+      partnerLinkId:   d.partnerLinkId || "",
+      lockAgency:      Boolean(d.lockAgency) && Boolean(d.agency),
+    };
+  }
   const params = new URLSearchParams(window.location.search);
   const agency = cleanContextValue(params.get("agency"));
-  const partnerAgency = cleanContextValue(params.get("partnerAgency"));
-  const partnerCountry = cleanContextValue(params.get("partnerCountry"));
-  const partnerLinkCode = cleanContextValue(params.get("partnerLinkCode"));
-  const partnerLinkLabel = cleanContextValue(params.get("linkLabel"));
-
   return {
     agency,
-    partnerAgency,
-    partnerCountry,
-    partnerLinkCode,
-    partnerLinkLabel,
-    lockAgency: params.get("lockAgency") === "1" && Boolean(agency),
+    partnerAgency:   cleanContextValue(params.get("partnerAgency")),
+    partnerCountry:  cleanContextValue(params.get("partnerCountry")),
+    partnerLinkCode: cleanContextValue(params.get("partnerLinkCode")),
+    partnerLinkLabel:cleanContextValue(params.get("linkLabel")),
+    partnerLinkId:   cleanContextValue(params.get("partnerLinkId")),
+    lockAgency:      params.get("lockAgency") === "1" && Boolean(agency),
   };
 }
 
-const PARTNER_CONTEXT = readPartnerContext();
-
-// Gate: block access if no agency param (must arrive via a partner link)
-if (!PARTNER_CONTEXT.agency) {
+function showNoLinkError() {
   document.body.innerHTML = `
     <div style="font-family:'Plus Jakarta Sans',sans-serif;background:#f5f2ec;color:#0d1b27;margin:0;display:grid;place-items:center;min-height:100vh;padding:24px;">
       <div style="max-width:520px;background:#fff;border-radius:24px;padding:40px 36px;box-shadow:0 24px 60px rgba(12,18,24,0.12);text-align:center;">
@@ -1231,8 +1237,9 @@ if (!PARTNER_CONTEXT.agency) {
         <a href="/" style="display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 24px;border-radius:999px;background:#c85e38;color:#fff;font-size:15px;font-weight:700;text-decoration:none;">Go to JobReady Home</a>
       </div>
     </div>`;
-  throw new Error("No agency param — page blocked.");
 }
+
+let PARTNER_CONTEXT = {};
 
 const EXTRA_FIELD_META = {
   agency: { label: "Singapore agency", ic: "🏬" },
@@ -1281,6 +1288,7 @@ function applyPartnerContext() {
   if (PARTNER_CONTEXT.partnerCountry) data.partnerCountry = PARTNER_CONTEXT.partnerCountry;
   if (PARTNER_CONTEXT.partnerLinkCode) data.partnerLinkCode = PARTNER_CONTEXT.partnerLinkCode;
   if (PARTNER_CONTEXT.partnerLinkLabel) data.partnerLinkLabel = PARTNER_CONTEXT.partnerLinkLabel;
+  if (PARTNER_CONTEXT.partnerLinkId) data.partnerLinkId = PARTNER_CONTEXT.partnerLinkId;
 }
 
 function renderContextBanner() {
@@ -2615,11 +2623,31 @@ function escHtml(str) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-restoreDraft();
-if (currentStep < 0 || currentStep > getSteps().length) currentStep = 0;
-document.getElementById("langSel").value = lang;
-renderContextBanner();
-render();
+(async function () {
+  // If served directly at /apply/:slug, fetch link data from API before rendering
+  const applyMatch = window.location.pathname.match(/^\/apply\/([^/?#]+)/);
+  if (applyMatch) {
+    const slug = applyMatch[1];
+    try {
+      const res = await fetch(`/api/link/${encodeURIComponent(slug)}`);
+      const json = await res.json();
+      if (!res.ok || !json.ok) { showNoLinkError(); return; }
+      window.__LINK_DATA__ = json;
+    } catch (e) {
+      showNoLinkError(); return;
+    }
+  }
+
+  PARTNER_CONTEXT = readPartnerContext();
+
+  if (!PARTNER_CONTEXT.agency) { showNoLinkError(); return; }
+
+  restoreDraft();
+  if (currentStep < 0 || currentStep > getSteps().length) currentStep = 0;
+  document.getElementById("langSel").value = lang;
+  renderContextBanner();
+  render();
+})();
 
 function openExitModal() {
   if (currentStep === 0) {
