@@ -290,6 +290,55 @@ async function loadAgencyUsage(agency) {
 }
 
 // ─── Authenticated PDF download ───────────────────────────────────────────────
+// Accepts ?id=<submission_id> and generates a short-lived Supabase Storage signed URL.
+// Falls back to local disk for dev/testing.
+app.get("/api/pdf/download", async (req, res) => {
+  const token = (() => {
+    const h = req.headers["authorization"] || "";
+    if (h.startsWith("Bearer ")) return h.slice(7);
+    return req.query.token || null;
+  })();
+  if (!token) return res.status(401).send("Unauthorized");
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !user) return res.status(401).send("Unauthorized");
+
+  const submissionId = req.query.id;
+  if (!submissionId) return res.status(400).send("Missing submission id");
+
+  // Verify the submission belongs to the requesting user's agency
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", user.id)
+    .maybeSingle();
+  if (!agency) return res.status(403).send("Forbidden");
+
+  const { data: sub } = await supabase
+    .from("submissions")
+    .select("pdf_path")
+    .eq("id", submissionId)
+    .eq("agency_id", agency.id)
+    .maybeSingle();
+  if (!sub) return res.status(404).send("Not found");
+  if (!sub.pdf_path) return res.status(404).send("No PDF for this submission");
+
+  // Try Supabase Storage first (persistent, survives deploys)
+  const { data: signed, error: signErr } = await supabase.storage
+    .from("Resumes")
+    .createSignedUrl(sub.pdf_path, 60 * 60); // 1-hour link
+  if (!signErr && signed?.signedUrl) {
+    return res.redirect(302, signed.signedUrl);
+  }
+
+  // Fallback: local file (dev only — not reliable on Render)
+  const localPath = path.join(resumeOutputDir, ...sub.pdf_path.replace(/^resume_output[\\/]/, "").split("/"));
+  res.sendFile(localPath, err => {
+    if (err && !res.headersSent) res.status(404).send("PDF not found");
+  });
+});
+
+// Legacy route kept so old links don't hard-404
 app.get("/api/pdf/:filename", async (req, res) => {
   const token = (() => {
     const h = req.headers["authorization"] || "";
@@ -299,8 +348,7 @@ app.get("/api/pdf/:filename", async (req, res) => {
   if (!token) return res.status(401).send("Unauthorized");
   const { data: { user }, error } = await supabase.auth.getUser(token);
   if (error || !user) return res.status(401).send("Unauthorized");
-
-  const filename = path.basename(req.params.filename); // prevent path traversal
+  const filename = path.basename(req.params.filename);
   const filePath = path.join(resumeOutputDir, filename);
   res.sendFile(filePath, err => {
     if (err && !res.headersSent) res.status(404).send("Not found");

@@ -656,7 +656,7 @@ a { color: inherit; text-decoration: none; }
       { k: "Attachments", v: s.attachment_count || 0 },
     ];
 
-    const pdfUrl = s.pdf_path ? `/api/pdf/${s.pdf_path.split("/").pop()}?token=${encodeURIComponent(token)}` : null;
+    const pdfUrl = s.pdf_path ? `/api/pdf/download?id=${encodeURIComponent(s.id)}&token=${encodeURIComponent(token)}` : null;
 
     body.innerHTML = `
       <div class="drawer-section">

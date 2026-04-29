@@ -424,7 +424,7 @@ tr:hover td { background: #fafaf9; }
     ];
 
     const pdfUrl = s.pdf_path
-      ? `/api/pdf/${s.pdf_path.split("/").pop()}?token=${encodeURIComponent(token)}`
+      ? `/api/pdf/download?id=${encodeURIComponent(s.id)}&token=${encodeURIComponent(token)}`
       : null;
 
     // Build readable field list from submission data object
