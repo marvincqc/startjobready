@@ -235,7 +235,7 @@ tr:hover td { background: #fafaf9; }
     document.getElementById("statSubmissions").textContent = stats.submissions;
     document.getElementById("statUsers").textContent = stats.authUsers;
 
-    loadAgencies();
+    await loadAgencies();
     loadSubmissions();
   });
 
