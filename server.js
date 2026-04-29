@@ -246,7 +246,7 @@ const SUPER_ADMIN = "marvincqc@gmail.com";
 
 // ─── Plan limits ──────────────────────────────────────────────────────────────
 const PLAN_LIMITS = {
-  free:  { maxLinks: 3,        maxSubmissionsPerMonth: 50 },
+  free:  { maxLinks: 3,        maxSubmissionsPerMonth: 20 },
   pro:   { maxLinks: 25,       maxSubmissionsPerMonth: 500 },
   scale: { maxLinks: Infinity, maxSubmissionsPerMonth: Infinity },
 };
