@@ -278,7 +278,23 @@ async function mirrorSubmission(paths, pdfBuffer, manifestJson, attachmentArtifa
   };
 }
 
+function stripEmoji(str) {
+  return String(str ?? "")
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+    .replace(/[\u{2600}-\u{27BF}]/gu, "")
+    .replace(/️/gu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function buildPDF(d) {
+  // Sanitize all string fields — Helvetica cannot render emoji or flag characters
+  const clean = {};
+  for (const [k, v] of Object.entries(d)) {
+    clean[k] = typeof v === "string" ? stripEmoji(v) : v;
+  }
+  d = clean;
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
     const chunks = [];
