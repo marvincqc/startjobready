@@ -470,7 +470,6 @@ app.get("/pricing", (_req, res) => res.sendFile(path.join(rootDir, "public", "pr
 app.get("/register",        (_req, res) => res.sendFile(path.join(rootDir, "public", "register.html")));
 app.get("/login",           (_req, res) => res.sendFile(path.join(rootDir, "public", "login.html")));
 app.get("/dashboard",       (_req, res) => res.sendFile(path.join(rootDir, "public", "dashboard.html")));
-app.get("/password-reset",  (_req, res) => res.sendFile(path.join(rootDir, "public", "password-reset.html")));
 app.get("/auth/callback",   (_req, res) => res.sendFile(path.join(rootDir, "public", "auth", "callback.html")));
 
 // ─── Supabase public config (safe to expose) ──────────────────────────────────
