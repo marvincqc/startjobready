@@ -320,13 +320,18 @@ app.get("/api/pdf/download", async (req, res) => {
     .eq("id", submissionId)
     .eq("agency_id", agency.id)
     .maybeSingle();
-  if (!sub) return res.status(404).send("Not found");
-  if (!sub.pdf_path) return res.status(404).send("No PDF for this submission");
+  if (!sub) return res.status(404).json({ ok: false, stage: "lookup", error: "Submission not found" });
+  if (!sub.pdf_path) return res.status(404).json({ ok: false, stage: "pdf_path", error: "No PDF path stored for this submission" });
+
+  console.log(`PDF download: submission ${submissionId}, path: ${sub.pdf_path}`);
 
   // Try Supabase Storage first (persistent, survives deploys)
   const { data: signed, error: signErr } = await supabase.storage
     .from("Resumes")
     .createSignedUrl(sub.pdf_path, 60 * 60); // 1-hour link
+
+  console.log(`PDF signed URL: ok=${!signErr} err=${signErr?.message} url=${signed?.signedUrl?.slice(0,60)}`);
+
   if (!signErr && signed?.signedUrl) {
     return res.redirect(302, signed.signedUrl);
   }
@@ -334,7 +339,7 @@ app.get("/api/pdf/download", async (req, res) => {
   // Fallback: local file (dev only — not reliable on Render)
   const localPath = path.join(resumeOutputDir, ...sub.pdf_path.replace(/^resume_output[\\/]/, "").split("/"));
   res.sendFile(localPath, err => {
-    if (err && !res.headersSent) res.status(404).send("PDF not found");
+    if (err && !res.headersSent) res.status(404).json({ ok: false, stage: "storage", error: signErr?.message || "Storage error", path: sub.pdf_path });
   });
 });
 
