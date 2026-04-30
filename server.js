@@ -644,7 +644,9 @@ app.patch("/api/links/:id", requireAuth, async (req, res) => {
 // ─── Submissions ──────────────────────────────────────────────────────────────
 app.get("/api/submissions", requireAuth, async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
-  const cursor = req.query.cursor || null; // ISO timestamp of last item
+  const cursor = req.query.cursor || null;
+  const q = (req.query.q || "").trim();
+  const nationality = (req.query.nationality || "").trim();
 
   const isAdmin = req.user.email === SUPER_ADMIN;
 
@@ -664,6 +666,8 @@ app.get("/api/submissions", requireAuth, async (req, res) => {
     query = query.eq("agency_id", agency.id);
   }
 
+  if (q) query = query.ilike("worker_name", `%${q}%`);
+  if (nationality) query = query.eq("nationality", nationality);
   if (cursor) query = query.lt("created_at", cursor);
 
   const { data, error } = await query;

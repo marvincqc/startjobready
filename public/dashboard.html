@@ -212,6 +212,32 @@ a { color: inherit; text-decoration: none; }
 .sub-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .sub-attach { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
 
+/* ── FILTER BAR ──────────────────────────────────────────────── */
+.filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-search {
+  flex: 1; min-width: 160px; height: 40px; padding: 0 14px 0 36px;
+  border: 1.5px solid var(--line); border-radius: 999px;
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 13px; color: var(--ink);
+  outline: none; transition: border-color 0.15s; background: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Ccircle cx='6' cy='6' r='4.5' stroke='%237a8a96' stroke-width='1.4'/%3E%3Cpath d='M9.5 9.5L12 12' stroke='%237a8a96' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 13px center;
+}
+.filter-search:focus { border-color: var(--brand); }
+.filter-select {
+  height: 40px; padding: 0 14px; border-radius: 999px;
+  border: 1.5px solid var(--line); background: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 13px; color: var(--ink);
+  outline: none; cursor: pointer; transition: border-color 0.15s;
+}
+.filter-select:focus { border-color: var(--brand); }
+.filter-select.active { border-color: var(--brand); color: var(--brand); font-weight: 700; }
+.filter-clear {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  background: none; border: none; cursor: pointer; padding: 0; white-space: nowrap;
+}
+.filter-clear:hover { color: var(--ink); }
+.filter-count { font-size: 12px; color: var(--muted); white-space: nowrap; align-self: center; }
+
 .load-more-btn {
   display: flex; align-items: center; justify-content: center;
   height: 44px; width: 100%; border-radius: 999px;
@@ -309,6 +335,24 @@ a { color: inherit; text-decoration: none; }
       <div class="section-header">
         <h2 class="section-title">Submissions</h2>
       </div>
+      <div class="filter-bar">
+        <input type="search" class="filter-search" id="filterSearch" placeholder="Search by name…" autocomplete="off">
+        <select class="filter-select" id="filterNationality">
+          <option value="">All nationalities</option>
+          <option>🇸🇬 Singaporean</option>
+          <option>🇲🇾 Malaysian</option>
+          <option>🇨🇳 Chinese</option>
+          <option>🇧🇩 Bangladeshi</option>
+          <option>🇮🇳 Indian</option>
+          <option>🇱🇰 Sri Lankan</option>
+          <option>🇹🇭 Thai</option>
+          <option>🇲🇲 Myanmarese</option>
+          <option>🇵🇭 Filipino</option>
+          <option>🇮🇩 Indonesian</option>
+          <option>🌍 Other</option>
+        </select>
+        <button class="filter-clear" id="filterClear" style="display:none;">✕ Clear</button>
+      </div>
       <div id="submissionsContent"><div class="spinner"></div></div>
       <button class="load-more-btn" id="loadMoreBtn" style="display:none;">Load more</button>
     </div>
@@ -386,6 +430,9 @@ a { color: inherit; text-decoration: none; }
   let loadingMore = false;
   let currentPlan = "free";
   let currentUsage = null;
+  let filterQuery = "";
+  let filterNationality = "";
+  let filterDebounce = null;
 
   const PLAN_LABELS = { free: "Free", pro: "Pro", scale: "Scale" };
   const TIERS = [
@@ -583,8 +630,11 @@ a { color: inherit; text-decoration: none; }
     btn.disabled = true;
 
     try {
-      const url = `/api/submissions?limit=20${cursor ? "&cursor=" + encodeURIComponent(cursor) : ""}`;
-      const res = await fetch(url, { headers: auth() });
+      const params = new URLSearchParams({ limit: 20 });
+      if (cursor) params.set("cursor", cursor);
+      if (filterQuery) params.set("q", filterQuery);
+      if (filterNationality) params.set("nationality", filterNationality);
+      const res = await fetch(`/api/submissions?${params}`, { headers: auth() });
       const json = await res.json();
 
       if (!json.ok) {
@@ -599,9 +649,12 @@ a { color: inherit; text-decoration: none; }
 
       const list = json.submissions;
       const container = document.getElementById("submissionsContent");
+      const isFiltering = filterQuery || filterNationality;
 
       if (!cursor && list.length === 0) {
-        container.innerHTML = `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`;
+        container.innerHTML = isFiltering
+          ? `<div class="card"><div class="empty-state">No submissions match your search.</div></div>`
+          : `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`;
         loadingMore = false; return;
       }
 
@@ -616,8 +669,42 @@ a { color: inherit; text-decoration: none; }
     }
   }
 
+  function resetAndReload() {
+    nextCursor = null;
+    document.getElementById("submissionsContent").innerHTML = `<div class="spinner"></div>`;
+    document.getElementById("loadMoreBtn").style.display = "none";
+    loadSubmissions();
+  }
+
+  function updateFilterClear() {
+    const hasFilter = filterQuery || filterNationality;
+    document.getElementById("filterClear").style.display = hasFilter ? "inline" : "none";
+    document.getElementById("filterNationality").classList.toggle("active", !!filterNationality);
+  }
+
   document.getElementById("loadMoreBtn").addEventListener("click", () => {
     if (nextCursor) loadSubmissions(nextCursor);
+  });
+
+  document.getElementById("filterSearch").addEventListener("input", (e) => {
+    filterQuery = e.target.value.trim();
+    clearTimeout(filterDebounce);
+    filterDebounce = setTimeout(() => { resetAndReload(); updateFilterClear(); }, 300);
+  });
+
+  document.getElementById("filterNationality").addEventListener("change", (e) => {
+    filterNationality = e.target.value;
+    resetAndReload();
+    updateFilterClear();
+  });
+
+  document.getElementById("filterClear").addEventListener("click", () => {
+    filterQuery = "";
+    filterNationality = "";
+    document.getElementById("filterSearch").value = "";
+    document.getElementById("filterNationality").value = "";
+    resetAndReload();
+    updateFilterClear();
   });
 
   function buildSubRow(s) {
