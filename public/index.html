@@ -1114,7 +1114,6 @@ const TR = {
       documents: "Additional Documents",
     }
   },
-  // Other languages use English steps with translated UI strings only
   zh: {
     stepOf: (a,b) => `第 ${a} 步，共 ${b} 步`,
     back:"← 返回", next:"继续 →", submit:"提交简历 ✓",
@@ -1128,6 +1127,37 @@ const TR = {
     errRequired:"此字段为必填项。", errDob:"请输入有效日期。示例：15 Jan 1990",
     errPhone:"请输入包含国家代码的有效电话号码。", errEmail:"请输入有效的电子邮件地址。",
     errSalary:"请输入数字，例如 1800", errDate:"请输入日期，例如 Jan 2022 – Mar 2024",
+    reviewSections:{ routing:"代理路由", personal:"个人信息", job:"工作偏好", experience:"工作经历", skills:"技能与教育", documents:"附加文件" },
+    stepOverrides:{
+      agency:      { label:"代理公司",    q:"这份简历是给哪家劳工公司的？",               hint:"请输入代理公司名称。",                                                                                  ph:"例如：Worklink Manpower Pte Ltd" },
+      scanDoc:     { label:"扫描文件",    q:"想更快填写表格吗？",                         hint:"上传护照、简历或身份证的照片或PDF。我们将读取并预填您的信息。所有操作在您的设备上进行——提交前不会离开您的设备。" },
+      name:        { label:"全名",        q:"您的全名是什么？",                           hint:"请输入您的法定全名。",                                                                                  ph:"例如：Ahmad bin Ramli" },
+      dob:         { label:"出生日期",    q:"您的出生日期是什么？",                       hint:"从日历中选择您的日期。" },
+      nationality: { label:"国籍",        q:"您的国籍是什么？",                           hint:"选择签发您护照的国家。" },
+      country:     { label:"所在国家",    q:"您目前居住在哪个国家？",                     hint:"选择您目前的居住国。" },
+      city:        { label:"城市",        q:"您在哪个城市或城镇？",                       ph:"例如：吉隆坡" },
+      phone:       { label:"电话",        q:"您的电话号码是什么？",                       hint:"请包含国家代码。例如：+60 12-345 6789",                                                                ph:"例如：+60 12-345 6789" },
+      email:       { label:"电子邮件",    q:"您的电子邮件地址是什么？",                   hint:"例如：ahmad@gmail.com",                                                                                ph:"例如：ahmad@gmail.com" },
+      jobType:     { label:"工作类型",    q:"您在新加坡希望从事什么类型的工作？",         hint:"请选择所有适用项。",   opts:["建筑","清洁","送货/物流","安保","仓库","餐饮/厨房","制造业","其他"] },
+      workArrange: { label:"工作安排",    q:"您接受什么类型的工作安排？",                 opts:["全职","兼职","轮班"] },
+      availability:{ label:"到岗时间",    q:"您什么时候可以在新加坡开始工作？",           opts:["立即可上班","一周内","一个月内"] },
+      salary:      { label:"薪资 (SGD)",  q:"您在新加坡的预期月薪是多少？",               hint:"单位：新加坡元。如灵活可留空。",                                                                        ph:"例如：1800" },
+      experience:  { label:"工作经验",    q:"您有多少年的工作经验？",                     hint:"在此类工作方面的经验。",                                                                               opts:["无经验","少于1年","1–3年","3–5年","5–10年","10年以上"] },
+      job1Title:   { label:"职位 1",      q:"您最近的职位是什么？",                       hint:"例如：建筑工人、保安、清洁工",                                                                         ph:"例如：建筑工人" },
+      job1Company: { label:"公司 1",      q:"您在哪家公司工作？",                         ph:"例如：Lim Construction Pte Ltd" },
+      job1Dates:   { label:"职位 1 时间", q:"您在那里工作的时间？",                       hint:"选择开始和结束月份。" },
+      job2Title:   { label:"职位 2",      q:"您第二份工作的职位是什么？",                 hint:"如果只有一份工作，请留空。",                                                                           ph:"例如：仓库工人" },
+      job2Company: { label:"公司 2",      q:"那家公司是哪个？",                           ph:"例如：ABC Logistics" },
+      job2Dates:   { label:"职位 2 时间", q:"您在那里工作的时间？",                       hint:"选择开始和结束月份。" },
+      job3Title:   { label:"职位 3",      q:"您第三份工作的职位是什么？",                 hint:"如果只有两份工作，请留空。",                                                                           ph:"例如：清洁工" },
+      job3Company: { label:"公司 3",      q:"那家公司是哪个？",                           ph:"例如：XYZ Services" },
+      job3Dates:   { label:"职位 3 时间", q:"您在那里工作的时间？",                       hint:"选择开始和结束月份。" },
+      skills:      { label:"技能",        q:"您掌握哪些技能和工具？",                     hint:"例如：叉车、脚手架、焊接、清洁设备、驾驶",                                                             ph:"例如：叉车、脚手架、焊接" },
+      certs:       { label:"证书",        q:"您有任何证书或执照吗？",                     hint:"例如：叉车执照、BCSS、食品卫生证、安保执照",                                                           ph:"例如：叉车执照、BCSS" },
+      education:   { label:"学历",        q:"您的最高学历是什么？",                       opts:["无正式教育","小学","中学","职业/ITE","文凭","学位或更高"] },
+      languages:   { label:"语言",        q:"您会说或读哪些语言？",                       hint:"请选择所有适用项。" },
+      documents:   { label:"附加文件",    q:"提交前请上传任何支持文件。",                 hint:"请尽可能多地添加文件。欢迎PDF、照片和常见文档类型。" },
+    },
   },
   ms: {
     stepOf:(a,b)=>`Langkah ${a} daripada ${b}`,
@@ -1142,6 +1172,37 @@ const TR = {
     errRequired:"Medan ini diperlukan.", errDob:"Sila masukkan tarikh yang sah. Contoh: 15 Jan 1990",
     errPhone:"Sila masukkan nombor telefon dengan kod negara.", errEmail:"Sila masukkan alamat e-mel yang sah.",
     errSalary:"Sila masukkan nombor, cth. 1800", errDate:"Sila masukkan tarikh, cth. Jan 2022 – Mac 2024",
+    reviewSections:{ routing:"Laluan Agensi", personal:"Maklumat Peribadi", job:"Pilihan Kerja", experience:"Pengalaman Kerja", skills:"Kemahiran & Pendidikan", documents:"Dokumen Tambahan" },
+    stepOverrides:{
+      agency:      { label:"Agensi",           q:"Resume ini untuk agensi tenaga kerja yang mana?",           hint:"Taip nama agensi tepat seperti yang diberikan kepada anda.",                                                                                                                    ph:"cth. Worklink Manpower Pte Ltd" },
+      scanDoc:     { label:"Imbas dokumen",     q:"Mahu isi borang dengan lebih cepat?",                       hint:"Muat naik foto atau PDF pasport, resume, atau ID anda. Kami akan membacanya dan mengisi butiran anda terlebih dahulu. Semua berjalan di pelayar anda — tiada yang meninggalkan peranti anda sehingga anda menghantar." },
+      name:        { label:"Nama penuh",        q:"Apakah nama penuh anda?",                                   hint:"Masukkan nama sah penuh anda.",                                                                                                                                                ph:"cth. Ahmad bin Ramli" },
+      dob:         { label:"Tarikh lahir",      q:"Apakah tarikh lahir anda?",                                 hint:"Pilih tarikh anda dari kalendar." },
+      nationality: { label:"Kewarganegaraan",   q:"Apakah kewarganegaraan anda?",                              hint:"Pilih negara yang mengeluarkan pasport anda." },
+      country:     { label:"Negara",            q:"Di negara mana anda tinggal sekarang?",                     hint:"Pilih negara kediaman semasa anda." },
+      city:        { label:"Bandar",            q:"Di bandar atau pekan mana anda berada?",                    ph:"cth. Kuala Lumpur" },
+      phone:       { label:"Telefon",           q:"Apakah nombor telefon anda?",                               hint:"Sertakan kod negara anda. Contoh: +60 12-345 6789",                                                                                                                            ph:"cth. +60 12-345 6789" },
+      email:       { label:"E-mel",             q:"Apakah alamat e-mel anda?",                                 hint:"Contoh: ahmad@gmail.com",                                                                                                                                                      ph:"cth. ahmad@gmail.com" },
+      jobType:     { label:"Jenis kerja",       q:"Apakah jenis kerja yang anda cari di Singapura?",           hint:"Pilih semua yang berkenaan.",   opts:["Pembinaan","Pembersihan","Penghantaran / Logistik","Keselamatan","Gudang","F&B / Dapur","Pembuatan","Lain-lain"] },
+      workArrange: { label:"Susunan kerja",     q:"Apakah jenis susunan kerja yang anda sedia terima?",        opts:["Sepenuh masa","Separuh masa","Kerja syif"] },
+      availability:{ label:"Ketersediaan",      q:"Bilakah anda boleh mula bekerja di Singapura?",             opts:["Segera","Dalam 1 minggu","Dalam 1 bulan"] },
+      salary:      { label:"Gaji (SGD)",        q:"Berapakah gaji bulanan yang anda jangkakan di Singapura?",  hint:"Dalam Dolar Singapura. Biarkan kosong jika fleksibel.",                                                                                                                        ph:"cth. 1800" },
+      experience:  { label:"Pengalaman",        q:"Berapa tahun pengalaman yang anda ada?",                    hint:"Dalam jenis kerja ini.",               opts:["Tiada pengalaman","< 1 tahun","1–3 tahun","3–5 tahun","5–10 tahun","10+ tahun"] },
+      job1Title:   { label:"Jawatan 1",         q:"Apakah jawatan kerja terbaru anda?",                        hint:"Contoh: Pekerja Pembinaan, Pengawal Keselamatan, Pembersih",                                                                                                                    ph:"cth. Pekerja Pembinaan" },
+      job1Company: { label:"Syarikat 1",        q:"Di syarikat mana anda bekerja?",                            ph:"cth. Lim Construction Pte Ltd" },
+      job1Dates:   { label:"Tempoh kerja 1",    q:"Bila anda bekerja di sana?",                                hint:"Pilih bulan mula dan tamat." },
+      job2Title:   { label:"Jawatan 2",         q:"Apakah jawatan kerja ke-2 anda?",                           hint:"Biarkan kosong jika anda hanya mempunyai satu kerja.",                                                                                                                         ph:"cth. Pekerja Gudang" },
+      job2Company: { label:"Syarikat 2",        q:"Syarikat mana itu?",                                        ph:"cth. ABC Logistics" },
+      job2Dates:   { label:"Tempoh kerja 2",    q:"Bila anda bekerja di sana?",                                hint:"Pilih bulan mula dan tamat." },
+      job3Title:   { label:"Jawatan 3",         q:"Apakah jawatan kerja ke-3 anda?",                           hint:"Biarkan kosong jika anda hanya mempunyai dua kerja.",                                                                                                                          ph:"cth. Pembersih" },
+      job3Company: { label:"Syarikat 3",        q:"Syarikat mana itu?",                                        ph:"cth. XYZ Services" },
+      job3Dates:   { label:"Tempoh kerja 3",    q:"Bila anda bekerja di sana?",                                hint:"Pilih bulan mula dan tamat." },
+      skills:      { label:"Kemahiran",         q:"Apakah kemahiran dan alatan yang anda tahu?",               hint:"Contoh: Forklift, perancah, kimpalan, peralatan pembersihan, memandu",                                                                                                          ph:"cth. Forklift, perancah, kimpalan" },
+      certs:       { label:"Sijil",             q:"Adakah anda mempunyai sebarang sijil atau lesen?",          hint:"Contoh: Lesen forklift, BCSS, sijil Kebersihan Makanan, lesen Keselamatan",                                                                                                     ph:"cth. Lesen forklift, BCSS" },
+      education:   { label:"Pendidikan",        q:"Apakah tahap pendidikan tertinggi anda?",                   opts:["Tiada pendidikan formal","Sekolah rendah","Sekolah menengah","Vokasional / ITE","Diploma","Ijazah atau lebih tinggi"] },
+      languages:   { label:"Bahasa",            q:"Bahasa apa yang boleh anda tutur atau baca?",               hint:"Pilih semua yang berkenaan." },
+      documents:   { label:"Dokumen tambahan",  q:"Muat naik sebarang dokumen sokongan sebelum menghantar.",   hint:"Tambah sebanyak mungkin fail. PDF, foto dan jenis dokumen biasa diterima." },
+    },
   },
   ta: {
     stepOf:(a,b)=>`படி ${a} / ${b}`,
@@ -1156,6 +1217,37 @@ const TR = {
     errRequired:"இந்த புலம் தேவை.", errDob:"சரியான தேதியை உள்ளிடவும். எ.கா: 15 Jan 1990",
     errPhone:"நாட்டு குறியீட்டுடன் சரியான எண் உள்ளிடவும்.", errEmail:"சரியான மின்னஞ்சல் உள்ளிடவும்.",
     errSalary:"எண் உள்ளிடவும், எ.கா. 1800", errDate:"தேதி உள்ளிடவும், எ.கா. Jan 2022 – Mar 2024",
+    reviewSections:{ routing:"நிறுவன திசைமாற்றம்", personal:"தனிப்பட்ட விவரங்கள்", job:"வேலை விருப்பங்கள்", experience:"வேலை அனுபவம்", skills:"திறன்கள் & கல்வி", documents:"கூடுதல் ஆவணங்கள்" },
+    stepOverrides:{
+      agency:      { label:"நிறுவனம்",          q:"இந்த resume எந்த manpower நிறுவனத்திற்கு?",                              hint:"உங்களுக்கு வழங்கப்பட்ட நிறுவனத்தின் பெயரை சரியாக தட்டச்சு செய்யுங்கள்.",                                                                                            ph:"எ.கா. Worklink Manpower Pte Ltd" },
+      scanDoc:     { label:"ஆவணம் ஸ்கேன்",     q:"படிவத்தை வேகமாக நிரப்ப விரும்புகிறீர்களா?",                             hint:"உங்கள் பாஸ்போர்ட், resume அல்லது ID-ன் புகைப்படம் அல்லது PDF பதிவேற்றவும். நாங்கள் அதை படித்து உங்கள் விவரங்களை நிரப்புவோம். அனைத்தும் உங்கள் உலாவியில் இயங்குகிறது — நீங்கள் சமர்ப்பிக்கும் வரை எதுவும் வெளியேறாது." },
+      name:        { label:"முழு பெயர்",        q:"உங்கள் முழு பெயர் என்ன?",                                               hint:"உங்கள் சட்டப்பூர்வ முழு பெயரை உள்ளிடவும்.",                                                                                                                          ph:"எ.கா. Ahmad bin Ramli" },
+      dob:         { label:"பிறந்த தேதி",       q:"உங்கள் பிறந்த தேதி என்ன?",                                              hint:"காலண்டரில் இருந்து தேதியை தேர்வு செய்யுங்கள்." },
+      nationality: { label:"தேசியம்",           q:"உங்கள் தேசியம் என்ன?",                                                  hint:"உங்கள் பாஸ்போர்ட் வழங்கிய நாட்டை தேர்வு செய்யுங்கள்." },
+      country:     { label:"நாடு",              q:"நீங்கள் தற்போது எந்த நாட்டில் வசிக்கிறீர்கள்?",                         hint:"உங்கள் தற்போதைய வசிப்பிட நாட்டை தேர்வு செய்யுங்கள்." },
+      city:        { label:"நகரம்",             q:"நீங்கள் எந்த நகரம் அல்லது நகரட்டத்தில் இருக்கிறீர்கள்?",               ph:"எ.கா. Kuala Lumpur" },
+      phone:       { label:"தொலைபேசி",         q:"உங்கள் தொலைபேசி எண் என்ன?",                                             hint:"உங்கள் நாட்டுக் குறியீட்டை சேர்க்கவும். எ.கா: +60 12-345 6789",                                                                                                       ph:"எ.கா. +60 12-345 6789" },
+      email:       { label:"மின்னஞ்சல்",        q:"உங்கள் மின்னஞ்சல் முகவரி என்ன?",                                        hint:"எ.கா: ahmad@gmail.com",                                                                                                                                        ph:"எ.கா. ahmad@gmail.com" },
+      jobType:     { label:"வேலை வகை",          q:"சிங்கப்பூரில் நீங்கள் என்ன வகையான வேலை தேடுகிறீர்கள்?",               hint:"பொருந்தும் அனைத்தையும் தேர்வு செய்யுங்கள்.", opts:["கட்டுமானம்","சுத்தம்","டெலிவரி / லாஜிஸ்டிக்ஸ்","பாதுகாப்பு","கிடங்கு","உணவகம் / சமையலறை","உற்பத்தி","மற்றவை"] },
+      workArrange: { label:"வேலை ஏற்பாடு",      q:"நீங்கள் எந்த வகையான வேலை ஏற்பாட்டிற்கு தயாராக இருக்கிறீர்கள்?",       opts:["முழுநேரம்","பகுதிநேரம்","ஷிப்ட் வேலை"] },
+      availability:{ label:"கிடைக்கும் தன்மை", q:"சிங்கப்பூரில் நீங்கள் எப்போது வேலை தொடங்க முடியும்?",                  opts:["உடனடியாக","1 வாரத்தில்","1 மாதத்தில்"] },
+      salary:      { label:"சம்பளம் (SGD)",     q:"சிங்கப்பூரில் உங்கள் எதிர்பார்க்கும் மாத சம்பளம் என்ன?",              hint:"சிங்கப்பூர் டாலரில். நெகிழ்வாக இருந்தால் காலியாக விடவும்.",                                                                                                            ph:"எ.கா. 1800" },
+      experience:  { label:"அனுபவம்",           q:"உங்களுக்கு எத்தனை வருட அனுபவம் உள்ளது?",                               hint:"இந்த வகை வேலையில்.",                  opts:["அனுபவம் இல்லை","1 வருடத்திற்கும் குறைவாக","1–3 வருடங்கள்","3–5 வருடங்கள்","5–10 வருடங்கள்","10+ வருடங்கள்"] },
+      job1Title:   { label:"வேலை 1 பதவி",       q:"உங்கள் சமீபத்திய வேலை பதவி என்ன?",                                     hint:"எ.கா: கட்டுமான தொழிலாளி, பாதுகாப்பு காவலர், சுத்தம் செய்பவர்",                                                                                                        ph:"எ.கா. கட்டுமான தொழிலாளி" },
+      job1Company: { label:"நிறுவனம் 1",        q:"நீங்கள் எந்த நிறுவனத்தில் வேலை செய்தீர்கள்?",                           ph:"எ.கா. Lim Construction Pte Ltd" },
+      job1Dates:   { label:"வேலை 1 காலம்",      q:"நீங்கள் அங்கு எப்போது வேலை செய்தீர்கள்?",                              hint:"தொடக்க மற்றும் முடிவு மாதங்களை தேர்வு செய்யுங்கள்." },
+      job2Title:   { label:"வேலை 2 பதவி",       q:"உங்கள் 2வது சமீபத்திய வேலை பதவி என்ன?",                                hint:"ஒரே ஒரு வேலை மட்டும் இருந்தால் காலியாக விடவும்.",                                                                                                                     ph:"எ.கா. கிடங்கு தொழிலாளி" },
+      job2Company: { label:"நிறுவனம் 2",        q:"அந்த நிறுவனம் எது?",                                                     ph:"எ.கா. ABC Logistics" },
+      job2Dates:   { label:"வேலை 2 காலம்",      q:"நீங்கள் அங்கு எப்போது வேலை செய்தீர்கள்?",                              hint:"தொடக்க மற்றும் முடிவு மாதங்களை தேர்வு செய்யுங்கள்." },
+      job3Title:   { label:"வேலை 3 பதவி",       q:"உங்கள் 3வது சமீபத்திய வேலை பதவி என்ன?",                                hint:"இரண்டு வேலைகள் மட்டும் இருந்தால் காலியாக விடவும்.",                                                                                                                  ph:"எ.கா. சுத்தம் செய்பவர்" },
+      job3Company: { label:"நிறுவனம் 3",        q:"அந்த நிறுவனம் எது?",                                                     ph:"எ.கா. XYZ Services" },
+      job3Dates:   { label:"வேலை 3 காலம்",      q:"நீங்கள் அங்கு எப்போது வேலை செய்தீர்கள்?",                              hint:"தொடக்க மற்றும் முடிவு மாதங்களை தேர்வு செய்யுங்கள்." },
+      skills:      { label:"திறன்கள்",          q:"நீங்கள் என்ன திறன்கள் மற்றும் கருவிகள் அறிவீர்கள்?",                  hint:"எ.கா: Forklift, சாரக்கட்டு, வெல்டிங், சுத்தம் செய்யும் உபகரணங்கள், வாகனம் ஓட்டுதல்",                                                                                  ph:"எ.கா. Forklift, சாரக்கட்டு, வெல்டிங்" },
+      certs:       { label:"சான்றிதழ்கள்",      q:"உங்களுக்கு ஏதேனும் சான்றிதழ்கள் அல்லது உரிமங்கள் உள்ளதா?",           hint:"எ.கா: Forklift உரிமம், BCSS, உணவு சுகாதார சான்றிதழ், பாதுகாப்பு உரிமம்",                                                                                           ph:"எ.கா. Forklift உரிமம், BCSS" },
+      education:   { label:"கல்வி",             q:"உங்கள் உயர்ந்த கல்வித் தகுதி என்ன?",                                   opts:["முறையான கல்வி இல்லை","தொடக்கப்பள்ளி","இடைநிலைப்பள்ளி","தொழிற்கல்வி / ITE","டிப்ளோமா","பட்டம் அல்லது அதிகம்"] },
+      languages:   { label:"மொழிகள்",           q:"நீங்கள் பேசக்கூடிய அல்லது படிக்கக்கூடிய மொழிகள் எவை?",               hint:"பொருந்தும் அனைத்தையும் தேர்வு செய்யுங்கள்." },
+      documents:   { label:"கூடுதல் ஆவணங்கள்", q:"சமர்ப்பிக்கும் முன் ஆதார ஆவணங்களை பதிவேற்றவும்.",                      hint:"முடிந்தவரை கோப்புகளை சேர்க்கவும். PDF, புகைப்படங்கள் மற்றும் பொதுவான ஆவண வகைகள் ஏற்றுக்கொள்ளப்படும்." },
+    },
   },
   hi: {
     stepOf:(a,b)=>`चरण ${a} / ${b}`,
@@ -1170,6 +1262,37 @@ const TR = {
     errRequired:"यह फ़ील्ड आवश्यक है।", errDob:"सही तारीख दर्ज करें। उदाहरण: 15 Jan 1990",
     errPhone:"देश कोड के साथ सही नंबर दर्ज करें।", errEmail:"सही ईमेल दर्ज करें।",
     errSalary:"संख्या दर्ज करें, जैसे 1800", errDate:"तारीख दर्ज करें, जैसे Jan 2022 – Mar 2024",
+    reviewSections:{ routing:"एजेंसी रूटिंग", personal:"व्यक्तिगत विवरण", job:"नौकरी प्राथमिकताएं", experience:"कार्य अनुभव", skills:"कौशल और शिक्षा", documents:"अतिरिक्त दस्तावेज़" },
+    stepOverrides:{
+      agency:      { label:"एजेंसी",              q:"यह resume किस manpower एजेंसी के लिए है?",                    hint:"एजेंसी का नाम बिल्कुल वैसे ही लिखें जैसा आपको दिया गया है।",                                                                                                         ph:"जैसे: Worklink Manpower Pte Ltd" },
+      scanDoc:     { label:"दस्तावेज़ स्कैन",     q:"फ़ॉर्म तेज़ी से भरना चाहते हैं?",                            hint:"अपना पासपोर्ट, resume या ID की फ़ोटो या PDF अपलोड करें। हम इसे पढ़कर आपके विवरण भर देंगे। सब कुछ आपके ब्राउज़र में चलता है — जमा करने तक कुछ भी आपके डिवाइस से नहीं जाता।" },
+      name:        { label:"पूरा नाम",            q:"आपका पूरा नाम क्या है?",                                     hint:"अपना कानूनी पूरा नाम दर्ज करें।",                                                                                                                                     ph:"जैसे: Ahmad bin Ramli" },
+      dob:         { label:"जन्म तिथि",           q:"आपकी जन्म तिथि क्या है?",                                   hint:"कैलेंडर से अपनी तारीख चुनें।" },
+      nationality: { label:"राष्ट्रीयता",         q:"आपकी राष्ट्रीयता क्या है?",                                  hint:"वह देश चुनें जिसने आपका पासपोर्ट जारी किया।" },
+      country:     { label:"देश",                 q:"आप वर्तमान में किस देश में रह रहे हैं?",                    hint:"अपना वर्तमान निवास देश चुनें।" },
+      city:        { label:"शहर",                 q:"आप किस शहर या कस्बे में हैं?",                              ph:"जैसे: Kuala Lumpur" },
+      phone:       { label:"फ़ोन",                q:"आपका फ़ोन नंबर क्या है?",                                   hint:"देश कोड शामिल करें। उदाहरण: +60 12-345 6789",                                                                                                                         ph:"जैसे: +60 12-345 6789" },
+      email:       { label:"ईमेल",                q:"आपका ईमेल पता क्या है?",                                    hint:"उदाहरण: ahmad@gmail.com",                                                                                                                                              ph:"जैसे: ahmad@gmail.com" },
+      jobType:     { label:"काम का प्रकार",       q:"आप सिंगापुर में किस प्रकार का काम ढूंढ रहे हैं?",          hint:"सभी लागू विकल्प चुनें।",             opts:["निर्माण","सफाई","डिलीवरी / लॉजिस्टिक्स","सुरक्षा","गोदाम","F&B / रसोई","विनिर्माण","अन्य"] },
+      workArrange: { label:"काम की व्यवस्था",     q:"आप किस प्रकार की काम व्यवस्था के लिए तैयार हैं?",          opts:["पूर्णकालिक","अंशकालिक","शिफ्ट काम"] },
+      availability:{ label:"उपलब्धता",            q:"आप सिंगापुर में काम कब शुरू कर सकते हैं?",                 opts:["तुरंत","1 सप्ताह में","1 महीने में"] },
+      salary:      { label:"वेतन (SGD)",          q:"सिंगापुर में आपका अपेक्षित मासिक वेतन क्या है?",          hint:"सिंगापुर डॉलर में। यदि लचीले हों तो खाली छोड़ें।",                                                                                                                    ph:"जैसे: 1800" },
+      experience:  { label:"अनुभव",               q:"आपके पास कितने साल का अनुभव है?",                          hint:"इस प्रकार के काम में।",               opts:["कोई अनुभव नहीं","1 साल से कम","1–3 साल","3–5 साल","5–10 साल","10+ साल"] },
+      job1Title:   { label:"नौकरी 1 पद",          q:"आपका सबसे हालिया नौकरी का पद क्या था?",                    hint:"उदाहरण: निर्माण मजदूर, सुरक्षा गार्ड, सफाईकर्मी",                                                                                                                    ph:"जैसे: निर्माण मजदूर" },
+      job1Company: { label:"कंपनी 1",             q:"आप किस कंपनी में काम करते थे?",                            ph:"जैसे: Lim Construction Pte Ltd" },
+      job1Dates:   { label:"नौकरी 1 तारीखें",    q:"आप वहाँ कब काम करते थे?",                                  hint:"शुरू और अंत महीने चुनें।" },
+      job2Title:   { label:"नौकरी 2 पद",          q:"आपकी दूसरी हालिया नौकरी का पद क्या था?",                   hint:"यदि केवल एक नौकरी हो तो खाली छोड़ें।",                                                                                                                               ph:"जैसे: गोदाम कर्मचारी" },
+      job2Company: { label:"कंपनी 2",             q:"वह कंपनी कौन सी थी?",                                      ph:"जैसे: ABC Logistics" },
+      job2Dates:   { label:"नौकरी 2 तारीखें",    q:"आप वहाँ कब काम करते थे?",                                  hint:"शुरू और अंत महीने चुनें।" },
+      job3Title:   { label:"नौकरी 3 पद",          q:"आपकी तीसरी हालिया नौकरी का पद क्या था?",                   hint:"यदि केवल दो नौकरियां हों तो खाली छोड़ें।",                                                                                                                           ph:"जैसे: सफाईकर्मी" },
+      job3Company: { label:"कंपनी 3",             q:"वह कंपनी कौन सी थी?",                                      ph:"जैसे: XYZ Services" },
+      job3Dates:   { label:"नौकरी 3 तारीखें",    q:"आप वहाँ कब काम करते थे?",                                  hint:"शुरू और अंत महीने चुनें।" },
+      skills:      { label:"कौशल",                q:"आप कौन से कौशल और उपकरण जानते हैं?",                       hint:"उदाहरण: फोर्कलिफ्ट, मचान, वेल्डिंग, सफाई उपकरण, ड्राइविंग",                                                                                                           ph:"जैसे: फोर्कलिफ्ट, मचान, वेल्डिंग" },
+      certs:       { label:"प्रमाणपत्र",          q:"क्या आपके पास कोई प्रमाणपत्र या लाइसेंस है?",             hint:"उदाहरण: फोर्कलिफ्ट लाइसेंस, BCSS, खाद्य स्वच्छता प्रमाणपत्र, सुरक्षा लाइसेंस",                                                                                    ph:"जैसे: फोर्कलिफ्ट लाइसेंस, BCSS" },
+      education:   { label:"शिक्षा",              q:"आपकी सर्वोच्च शिक्षा स्तर क्या है?",                       opts:["कोई औपचारिक शिक्षा नहीं","प्राथमिक विद्यालय","माध्यमिक विद्यालय","व्यावसायिक / ITE","डिप्लोमा","डिग्री या उससे अधिक"] },
+      languages:   { label:"भाषाएं",              q:"आप कौन सी भाषाएं बोल या पढ़ सकते हैं?",                   hint:"सभी लागू विकल्प चुनें।" },
+      documents:   { label:"अतिरिक्त दस्तावेज़", q:"जमा करने से पहले कोई भी सहायक दस्तावेज़ अपलोड करें।",     hint:"जितनी हो सके उतनी फ़ाइलें जोड़ें। PDF, फ़ोटो और सामान्य दस्तावेज़ प्रकार स्वीकार हैं।" },
+    },
   },
   bn: {
     stepOf:(a,b)=>`ধাপ ${a} / ${b}`,
@@ -1184,6 +1307,37 @@ const TR = {
     errRequired:"এই ক্ষেত্রটি প্রয়োজন।", errDob:"সঠিক তারিখ দিন। উদাহরণ: 15 Jan 1990",
     errPhone:"দেশের কোড সহ সঠিক নম্বর দিন।", errEmail:"সঠিক ইমেইল দিন।",
     errSalary:"সংখ্যা দিন, যেমন 1800", errDate:"তারিখ দিন, যেমন Jan 2022 – Mar 2024",
+    reviewSections:{ routing:"এজেন্সি রাউটিং", personal:"ব্যক্তিগত বিবরণ", job:"চাকরির পছন্দ", experience:"কর্ম অভিজ্ঞতা", skills:"দক্ষতা ও শিক্ষা", documents:"অতিরিক্ত নথি" },
+    stepOverrides:{
+      agency:      { label:"এজেন্সি",          q:"এই resume কোন manpower এজেন্সির জন্য?",                      hint:"আপনাকে দেওয়া এজেন্সির নাম ঠিক সেভাবে টাইপ করুন।",                                                                                                                    ph:"যেমন: Worklink Manpower Pte Ltd" },
+      scanDoc:     { label:"নথি স্ক্যান",      q:"ফর্ম দ্রুত পূরণ করতে চান?",                                 hint:"আপনার পাসপোর্ট, resume বা ID-র ছবি বা PDF আপলোড করুন। আমরা এটি পড়ে আপনার তথ্য পূর্ব-পূরণ করব। সবকিছু আপনার ব্রাউজারে চলে — জমা দেওয়া পর্যন্ত কিছুই আপনার ডিভাইস ছেড়ে যায় না।" },
+      name:        { label:"পূর্ণ নাম",        q:"আপনার পূর্ণ নাম কী?",                                        hint:"আপনার আইনগত পূর্ণ নাম লিখুন।",                                                                                                                                       ph:"যেমন: Ahmad bin Ramli" },
+      dob:         { label:"জন্ম তারিখ",       q:"আপনার জন্ম তারিখ কী?",                                      hint:"ক্যালেন্ডার থেকে আপনার তারিখ নির্বাচন করুন।" },
+      nationality: { label:"জাতীয়তা",         q:"আপনার জাতীয়তা কী?",                                         hint:"যে দেশ আপনার পাসপোর্ট ইস্যু করেছে সেটি নির্বাচন করুন।" },
+      country:     { label:"দেশ",              q:"আপনি বর্তমানে কোন দেশে বাস করছেন?",                         hint:"আপনার বর্তমান বসবাসের দেশ নির্বাচন করুন।" },
+      city:        { label:"শহর",              q:"আপনি কোন শহর বা নগরে আছেন?",                                ph:"যেমন: Kuala Lumpur" },
+      phone:       { label:"ফোন",              q:"আপনার ফোন নম্বর কী?",                                        hint:"আপনার দেশের কোড অন্তর্ভুক্ত করুন। যেমন: +60 12-345 6789",                                                                                                           ph:"যেমন: +60 12-345 6789" },
+      email:       { label:"ইমেইল",            q:"আপনার ইমেইল ঠিকানা কী?",                                    hint:"যেমন: ahmad@gmail.com",                                                                                                                                                ph:"যেমন: ahmad@gmail.com" },
+      jobType:     { label:"কাজের ধরন",        q:"সিঙ্গাপুরে আপনি কোন ধরনের কাজ খুঁজছেন?",                  hint:"প্রযোজ্য সব নির্বাচন করুন।",         opts:["নির্মাণ","পরিষ্কার","ডেলিভারি / লজিস্টিক্স","নিরাপত্তা","গুদাম","F&B / রান্নাঘর","উৎপাদন","অন্যান্য"] },
+      workArrange: { label:"কাজের ব্যবস্থা",  q:"আপনি কোন ধরনের কাজের ব্যবস্থায় রাজি?",                    opts:["পূর্ণকালীন","আংশিক সময়","শিফট কাজ"] },
+      availability:{ label:"উপলব্ধতা",         q:"আপনি সিঙ্গাপুরে কখন কাজ শুরু করতে পারবেন?",               opts:["এখনই","১ সপ্তাহের মধ্যে","১ মাসের মধ্যে"] },
+      salary:      { label:"বেতন (SGD)",       q:"সিঙ্গাপুরে আপনার প্রত্যাশিত মাসিক বেতন কত?",              hint:"সিঙ্গাপুর ডলারে। নমনীয় হলে খালি রাখুন।",                                                                                                                            ph:"যেমন: 1800" },
+      experience:  { label:"অভিজ্ঞতা",         q:"আপনার কত বছরের অভিজ্ঞতা আছে?",                             hint:"এই ধরনের কাজে।",                      opts:["কোনো অভিজ্ঞতা নেই","১ বছরের কম","১–৩ বছর","৩–৫ বছর","৫–১০ বছর","১০+ বছর"] },
+      job1Title:   { label:"চাকরি ১ পদ",       q:"আপনার সবচেয়ে সাম্প্রতিক চাকরির পদ কী ছিল?",               hint:"যেমন: নির্মাণ শ্রমিক, নিরাপত্তা প্রহরী, পরিষ্কারকর্মী",                                                                                                             ph:"যেমন: নির্মাণ শ্রমিক" },
+      job1Company: { label:"কোম্পানি ১",       q:"আপনি কোন কোম্পানিতে কাজ করতেন?",                            ph:"যেমন: Lim Construction Pte Ltd" },
+      job1Dates:   { label:"চাকরি ১ সময়কাল", q:"আপনি সেখানে কখন কাজ করেছিলেন?",                             hint:"শুরু এবং শেষ মাস নির্বাচন করুন।" },
+      job2Title:   { label:"চাকরি ২ পদ",       q:"আপনার ২য় সবচেয়ে সাম্প্রতিক চাকরির পদ কী ছিল?",           hint:"যদি শুধু একটি চাকরি থাকে তাহলে খালি রাখুন।",                                                                                                                     ph:"যেমন: গুদাম কর্মী" },
+      job2Company: { label:"কোম্পানি ২",       q:"সেই কোম্পানি কোনটি ছিল?",                                   ph:"যেমন: ABC Logistics" },
+      job2Dates:   { label:"চাকরি ২ সময়কাল", q:"আপনি সেখানে কখন কাজ করেছিলেন?",                             hint:"শুরু এবং শেষ মাস নির্বাচন করুন।" },
+      job3Title:   { label:"চাকরি ৩ পদ",       q:"আপনার ৩য় সবচেয়ে সাম্প্রতিক চাকরির পদ কী ছিল?",           hint:"যদি শুধু দুটি চাকরি থাকে তাহলে খালি রাখুন।",                                                                                                                     ph:"যেমন: পরিষ্কারকর্মী" },
+      job3Company: { label:"কোম্পানি ৩",       q:"সেই কোম্পানি কোনটি ছিল?",                                   ph:"যেমন: XYZ Services" },
+      job3Dates:   { label:"চাকরি ৩ সময়কাল", q:"আপনি সেখানে কখন কাজ করেছিলেন?",                             hint:"শুরু এবং শেষ মাস নির্বাচন করুন।" },
+      skills:      { label:"দক্ষতা",           q:"আপনি কোন দক্ষতা ও সরঞ্জাম জানেন?",                         hint:"যেমন: ফোর্কলিফট, ভারা, ওয়েল্ডিং, পরিষ্কারের সরঞ্জাম, ড্রাইভিং",                                                                                                    ph:"যেমন: ফোর্কলিফট, ভারা, ওয়েল্ডিং" },
+      certs:       { label:"সার্টিফিকেট",      q:"আপনার কোনো সার্টিফিকেট বা লাইসেন্স আছে?",                  hint:"যেমন: ফোর্কলিফট লাইসেন্স, BCSS, খাদ্য স্বাস্থ্যবিধি সার্টিফিকেট, নিরাপত্তা লাইসেন্স",                                                                               ph:"যেমন: ফোর্কলিফট লাইসেন্স, BCSS" },
+      education:   { label:"শিক্ষা",           q:"আপনার সর্বোচ্চ শিক্ষার স্তর কী?",                           opts:["কোনো আনুষ্ঠানিক শিক্ষা নেই","প্রাথমিক বিদ্যালয়","মাধ্যমিক বিদ্যালয়","বৃত্তিমূলক / ITE","ডিপ্লোমা","ডিগ্রি বা উচ্চতর"] },
+      languages:   { label:"ভাষা",             q:"আপনি কোন ভাষা বলতে বা পড়তে পারেন?",                       hint:"প্রযোজ্য সব নির্বাচন করুন।" },
+      documents:   { label:"অতিরিক্ত নথি",    q:"জমা দেওয়ার আগে যেকোনো সহায়ক নথি আপলোড করুন।",             hint:"যতটা সম্ভব ফাইল যোগ করুন। PDF, ছবি এবং সাধারণ নথির ধরন স্বাগত।" },
+    },
   },
 };
 
@@ -1269,7 +1423,14 @@ function t(key, ...args) {
   return typeof v === "function" ? v(...args) : v;
 }
 
-function getSteps() { return TR.en.steps; } // always use English step definitions
+function getSteps() {
+  const overrides = TR[lang]?.stepOverrides;
+  if (!overrides) return TR.en.steps;
+  return TR.en.steps.map(s => {
+    const o = overrides[s.k];
+    return o ? { ...s, ...o } : s;
+  });
+}
 
 function getFieldMeta(key) {
   return getSteps().find(step => step.k === key) || EXTRA_FIELD_META[key] || { label: key, ic: "•" };
@@ -1884,12 +2045,13 @@ function renderReview() {
   const card = document.createElement("div");
   card.className = "step-card active";
 
+  const rs = TR[lang]?.reviewSections ?? TR.en.reviewSections;
   const sections = [
-    { title: TR.en.reviewSections.routing, keys: ["agency","partnerAgency","partnerCountry","partnerLinkCode","partnerLinkLabel"], editable: key => key === "agency" },
-    { title: TR.en.reviewSections.personal, keys: ["name","dob","nationality","country","city","phone","email"] },
-    { title: TR.en.reviewSections.job,      keys: ["jobType","workArrange","availability","salary","experience"] },
-    { title: TR.en.reviewSections.experience, keys: ["job1Title","job1Company","job1Dates","job2Title","job2Company","job2Dates","job3Title","job3Company","job3Dates"] },
-    { title: TR.en.reviewSections.skills,   keys: ["skills","certs","education","languages"] },
+    { title: rs.routing,    keys: ["agency","partnerAgency","partnerCountry","partnerLinkCode","partnerLinkLabel"], editable: key => key === "agency" },
+    { title: rs.personal,   keys: ["name","dob","nationality","country","city","phone","email"] },
+    { title: rs.job,        keys: ["jobType","workArrange","availability","salary","experience"] },
+    { title: rs.experience, keys: ["job1Title","job1Company","job1Dates","job2Title","job2Company","job2Dates","job3Title","job3Company","job3Dates"] },
+    { title: rs.skills,     keys: ["skills","certs","education","languages"] },
   ];
 
   let html = `
@@ -1918,7 +2080,7 @@ function renderReview() {
 
   if (attachments.length) {
     html += `<div class="review-section">
-      <div class="review-section-title">${TR.en.reviewSections.documents}</div>
+      <div class="review-section-title">${rs.documents}</div>
       <div class="review-row" onclick="goToDocumentsStep()">
         <span class="review-ic">📎</span>
         <span class="review-lb">Files</span>
