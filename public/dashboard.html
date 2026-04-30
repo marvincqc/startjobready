@@ -331,9 +331,44 @@ a { color: inherit; text-decoration: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 600px) {
+  /* shell — tighter side padding on small phones */
+  .shell { width: min(1120px, calc(100% - 32px)); }
+
+  /* nav — hide agency name badge, tighten height and gaps */
+  .nav-inner { height: 56px; }
+  .agency-name-badge { display: none; }
+  .nav-right { gap: 10px; }
+
+  /* tabs — stretch full width */
+  .tabs { width: 100%; }
+  .tab { flex: 1; text-align: center; padding: 8px 12px; }
+
+  /* form row — single column */
   .form-row { grid-template-columns: 1fr; }
-  .link-url { max-width: 160px; }
-  .nav-inner { padding: 0 20px; }
+
+  /* link rows — let URL box go full width on its own line */
+  .link-url { max-width: 100%; width: 100%; }
+  .link-row { gap: 10px; }
+
+  /* submission rows — hide date (visible in drawer), tighten avatar */
+  .sub-date { display: none; }
+  .sub-attach { display: none; }
+  .sub-avatar { width: 36px; height: 36px; font-size: 13px; }
+  .sub-row { padding: 12px 14px; gap: 12px; }
+
+  /* filter bar — select goes full width when it wraps */
+  .filter-select { width: 100%; }
+  .filter-bar { gap: 8px; }
+
+  /* drawer — reduce padding, stack fields */
+  .drawer { padding: 20px; }
+  .drawer-fields { grid-template-columns: 1fr; }
+
+  /* section header — stack on very narrow */
+  .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* onboarding card — less padding */
+  .onboarding-card { padding: 28px 20px; }
 }
 
 </style>
