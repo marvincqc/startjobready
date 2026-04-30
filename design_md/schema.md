@@ -1,43 +1,59 @@
 # Data Model
 
-## Supabase Table: `resumes`
-- id (uuid)
-- lang (text)
-- name, phone, job_type, experience, skills, education
-- created_at (timestamp)
-- github_commit_sha (text)
+## Supabase Tables
 
-## GitHub Repo
-- Path: `/submissions/{id}.json`
-- Action: Auto-commit on new row insert (via Supabase Edge Function or API Route)
+### `agencies`
+| Column          | Type      | Notes                                      |
+|-----------------|-----------|--------------------------------------------|
+| id              | uuid PK   | auto-generated                             |
+| auth_id         | uuid      | Supabase auth.users.id (foreign key)       |
+| name            | text      | Agency display name                        |
+| slug            | text      | URL-safe identifier, unique, immutable     |
+| contact_email   | text      | Receives submission notification emails    |
+| plan            | text      | `free` \| `pro` \| `scale` — DEFAULT free  |
+| created_at      | timestamptz | auto                                     |
 
-## Project: ResumeBot Web (Next.js Revamp)
+### `partner_links`
+| Column          | Type      | Notes                                                |
+|-----------------|-----------|------------------------------------------------------|
+| id              | uuid PK   |                                                      |
+| agency_id       | uuid FK   | → agencies.id                                        |
+| full_slug       | text      | e.g. `apex-myanmar-2025`, unique                     |
+| partner_name    | text      | Sending agency name (optional)                       |
+| partner_country | text      | Worker source country (optional)                     |
+| lock_agency     | bool      | If true, worker cannot change the target agency      |
+| active          | bool      | Inactive links serve a 410 deactivated page          |
+| created_at      | timestamptz |                                                    |
 
-**Stack**: Next.js 14 (App Router), TS, Tailwind, Supabase, GitHub API.
-**UI**: Chat-like interface (client-side state).
-**Data**: Collect → Supabase + GitHub mirror.
-**Status**: 🟡 Full Revamp (Discard old webhook code).
+### `submissions`
+| Column           | Type      | Notes                                             |
+|------------------|-----------|---------------------------------------------------|
+| id               | uuid PK   |                                                   |
+| agency_id        | uuid FK   | → agencies.id (nullable for unmatched slugs)      |
+| partner_link_id  | uuid FK   | → partner_links.id (nullable)                     |
+| worker_name      | text      |                                                   |
+| nationality      | text      |                                                   |
+| job_type         | text      |                                                   |
+| data             | jsonb     | Full form answers                                 |
+| pdf_path         | text      | Supabase Storage path (`resumes/<submissionId>.pdf`) |
+| attachment_count | int       |                                                   |
+| created_at       | timestamptz | Used for monthly submission counting            |
 
-### ✅ Keep (Logic Only)
-- State machine flow: `lang → name → phone → job → skills → review`.
-- Translations: `en/ms/zh/ta/bn/hi` (see @bot.js).
-- Data model: `{name, phone, job_type, experience, skills, education}`.
+## Plan Limits (enforced server-side)
 
-### 🗑️ Discard
-- Meta/FB APIs, webhooks, signatures, `server.js`, `messenger.js`.
-- Ngrok, PSID sessions.
+| Plan  | Active links | Submissions / month |
+|-------|-------------|---------------------|
+| free  | 3           | **20**              |
+| pro   | 25          | 500                 |
+| scale | Unlimited   | Unlimited           |
 
-### 🚫 Constraints (Strict)
-- **Max 300 tokens/response** unless I ask "expand".
-- **No explanations** of Next.js/Supabase basics.
-- **No full file dumps**. Use `@file` references or diffs.
-- **Code only**: Show only changed/new lines.
+Limits are evaluated live via `COUNT` queries — no stored counters.
+Monthly window: first day of current calendar month (UTC) to now.
 
-### 🎯 Task 1
-Scaffold project structure + Supabase schema.
-1. List required files (path only).
-2. Write Supabase SQL for `resumes` table.
-3. Create `lib/supabase.ts` client setup.
+## SQL Migration (run once in Supabase SQL editor)
 
-### 🔍 If Context Missing
-Ask for **ONE** specific file. Do not guess.
+```sql
+-- Add plan column to existing agencies table
+ALTER TABLE agencies ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'
+  CHECK (plan IN ('free', 'pro', 'scale'));
+```

@@ -1072,6 +1072,7 @@ const TR = {
     doneBtn: "Done — next step →",
     successTitle: (name) => `You're all done, ${name}! 🎉`,
     successMsg: (agency) => `Your application has been sent to ${agency}. They'll review your details and reach out if there's a good match — typically within a few days.\n\nGood luck! 🙏`,
+    agencyLockedNote: "This was set by the link your agency gave you. Tap Next to continue.",
     errRequired: "This field is required.",
     errDob: "Please enter a valid date. Example: 15 Jan 1990",
     errPhone: "Please enter a valid phone number with country code.",
@@ -1079,7 +1080,7 @@ const TR = {
     errSalary: "Please enter a number, e.g. 1800",
     errDate: "Please enter dates, e.g. Jan 2022 – Mar 2024",
     steps: [
-      { k:"agency",      ic:"🏬", label:"Agency",      q:"Which manpower agency is this resume for?",                      hint:"Type the agency name exactly as given to you.",                              type:"text",  ph:"e.g. Worklink Manpower Pte Ltd" },
+      { k:"agency",      ic:"🏬", label:"Your agency",  q:"You're applying to:",                                            hint:"",                                                                          type:"text",  ph:"" },
       { k:"scanDoc",     ic:"📄", label:"Scan document",q:"Want to fill the form faster?",                                   hint:"Upload a photo or PDF of your passport, resume, or ID. We'll read it and pre-fill your details. Everything runs in your browser — nothing leaves your device until you submit.", type:"scan",  optional:true },
       { k:"name",        ic:"👤", label:"Full name",    q:"What is your full name?",                                        hint:"Enter your full legal name.",                                               type:"text",  ph:"e.g. Ahmad bin Ramli" },
       { k:"dob",         ic:"🎂", label:"Date of birth",q:"What is your date of birth?",                                   hint:"Pick your date from the calendar.",                                         type:"text",  control:"date", validate:"dob" },
@@ -1127,12 +1128,13 @@ const TR = {
     naBtn:"不适用 / 跳过", doneBtn:"完成 — 下一步 →",
     successTitle:(name)=>`完成了，${name}！🎉`,
     successMsg:(agency)=>`您的申请已发送至 ${agency}。他们将审核您的资料，如有合适职位通常会在几天内与您联系。\n\n祝您好运！🙏`,
+    agencyLockedNote:"这已由您代理公司提供的链接自动设置。点击继续即可。",
     errRequired:"此字段为必填项。", errDob:"请输入有效日期。示例：15 Jan 1990",
     errPhone:"请输入包含国家代码的有效电话号码。", errEmail:"请输入有效的电子邮件地址。",
     errSalary:"请输入数字，例如 1800", errDate:"请输入日期，例如 Jan 2022 – Mar 2024",
     reviewSections:{ routing:"代理路由", personal:"个人信息", job:"工作偏好", experience:"工作经历", skills:"技能与教育", documents:"附加文件" },
     stepOverrides:{
-      agency:      { label:"代理公司",    q:"这份简历是给哪家劳工公司的？",               hint:"请输入代理公司名称。",                                                                                  ph:"例如：Worklink Manpower Pte Ltd" },
+      agency:      { label:"您的代理公司", q:"您正在申请：",                               hint:"",                                                                                              ph:"" },
       scanDoc:     { label:"扫描文件",    q:"想更快填写表格吗？",                         hint:"上传护照、简历或身份证的照片或PDF。我们将读取并预填您的信息。所有操作在您的设备上进行——提交前不会离开您的设备。" },
       name:        { label:"全名",        q:"您的全名是什么？",                           hint:"请输入您的法定全名。",                                                                                  ph:"例如：Ahmad bin Ramli" },
       dob:         { label:"出生日期",    q:"您的出生日期是什么？",                       hint:"从日历中选择您的日期。" },
@@ -1172,12 +1174,13 @@ const TR = {
     naBtn:"Tidak berkenaan / Langkau", doneBtn:"Selesai — langkah seterusnya →",
     successTitle:(name)=>`Selesai, ${name}! 🎉`,
     successMsg:(agency)=>`Permohonan anda telah dihantar ke ${agency}. Mereka akan semak butiran anda dan menghubungi anda jika ada kecocokan — biasanya dalam beberapa hari.\n\nSemoga berjaya! 🙏`,
+    agencyLockedNote:"Ini telah ditetapkan oleh pautan yang diberikan oleh agensi anda. Ketik Seterusnya untuk teruskan.",
     errRequired:"Medan ini diperlukan.", errDob:"Sila masukkan tarikh yang sah. Contoh: 15 Jan 1990",
     errPhone:"Sila masukkan nombor telefon dengan kod negara.", errEmail:"Sila masukkan alamat e-mel yang sah.",
     errSalary:"Sila masukkan nombor, cth. 1800", errDate:"Sila masukkan tarikh, cth. Jan 2022 – Mac 2024",
     reviewSections:{ routing:"Laluan Agensi", personal:"Maklumat Peribadi", job:"Pilihan Kerja", experience:"Pengalaman Kerja", skills:"Kemahiran & Pendidikan", documents:"Dokumen Tambahan" },
     stepOverrides:{
-      agency:      { label:"Agensi",           q:"Resume ini untuk agensi tenaga kerja yang mana?",           hint:"Taip nama agensi tepat seperti yang diberikan kepada anda.",                                                                                                                    ph:"cth. Worklink Manpower Pte Ltd" },
+      agency:      { label:"Agensi anda",       q:"Anda memohon ke:",                                          hint:"",                                                                                                                                                                     ph:"" },
       scanDoc:     { label:"Imbas dokumen",     q:"Mahu isi borang dengan lebih cepat?",                       hint:"Muat naik foto atau PDF pasport, resume, atau ID anda. Kami akan membacanya dan mengisi butiran anda terlebih dahulu. Semua berjalan di pelayar anda — tiada yang meninggalkan peranti anda sehingga anda menghantar." },
       name:        { label:"Nama penuh",        q:"Apakah nama penuh anda?",                                   hint:"Masukkan nama sah penuh anda.",                                                                                                                                                ph:"cth. Ahmad bin Ramli" },
       dob:         { label:"Tarikh lahir",      q:"Apakah tarikh lahir anda?",                                 hint:"Pilih tarikh anda dari kalendar." },
@@ -1217,12 +1220,13 @@ const TR = {
     naBtn:"பொருந்தாது / தவிர்", doneBtn:"முடிந்தது — அடுத்த படி →",
     successTitle:(name)=>`முடிந்தது, ${name}! 🎉`,
     successMsg:(agency)=>`உங்கள் விண்ணப்பம் ${agency}-க்கு அனுப்பப்பட்டது. பொருத்தமான வேலை இருந்தால் சில நாட்களில் தொடர்பு கொள்வார்கள்.\n\nவாழ்த்துக்கள்! 🙏`,
+    agencyLockedNote:"இது உங்கள் நிறுவனம் தந்த இணைப்பால் அமைக்கப்பட்டது. தொடர Next ஐ தட்டவும்.",
     errRequired:"இந்த புலம் தேவை.", errDob:"சரியான தேதியை உள்ளிடவும். எ.கா: 15 Jan 1990",
     errPhone:"நாட்டு குறியீட்டுடன் சரியான எண் உள்ளிடவும்.", errEmail:"சரியான மின்னஞ்சல் உள்ளிடவும்.",
     errSalary:"எண் உள்ளிடவும், எ.கா. 1800", errDate:"தேதி உள்ளிடவும், எ.கா. Jan 2022 – Mar 2024",
     reviewSections:{ routing:"நிறுவன திசைமாற்றம்", personal:"தனிப்பட்ட விவரங்கள்", job:"வேலை விருப்பங்கள்", experience:"வேலை அனுபவம்", skills:"திறன்கள் & கல்வி", documents:"கூடுதல் ஆவணங்கள்" },
     stepOverrides:{
-      agency:      { label:"நிறுவனம்",          q:"இந்த resume எந்த manpower நிறுவனத்திற்கு?",                              hint:"உங்களுக்கு வழங்கப்பட்ட நிறுவனத்தின் பெயரை சரியாக தட்டச்சு செய்யுங்கள்.",                                                                                            ph:"எ.கா. Worklink Manpower Pte Ltd" },
+      agency:      { label:"உங்கள் நிறுவனம்",   q:"நீங்கள் விண்ணப்பிக்கும் நிறுவனம்:",                                    hint:"",                                                                                                                                                             ph:"" },
       scanDoc:     { label:"ஆவணம் ஸ்கேன்",     q:"படிவத்தை வேகமாக நிரப்ப விரும்புகிறீர்களா?",                             hint:"உங்கள் பாஸ்போர்ட், resume அல்லது ID-ன் புகைப்படம் அல்லது PDF பதிவேற்றவும். நாங்கள் அதை படித்து உங்கள் விவரங்களை நிரப்புவோம். அனைத்தும் உங்கள் உலாவியில் இயங்குகிறது — நீங்கள் சமர்ப்பிக்கும் வரை எதுவும் வெளியேறாது." },
       name:        { label:"முழு பெயர்",        q:"உங்கள் முழு பெயர் என்ன?",                                               hint:"உங்கள் சட்டப்பூர்வ முழு பெயரை உள்ளிடவும்.",                                                                                                                          ph:"எ.கா. Ahmad bin Ramli" },
       dob:         { label:"பிறந்த தேதி",       q:"உங்கள் பிறந்த தேதி என்ன?",                                              hint:"காலண்டரில் இருந்து தேதியை தேர்வு செய்யுங்கள்." },
@@ -1262,12 +1266,13 @@ const TR = {
     naBtn:"लागू नहीं / छोड़ें", doneBtn:"पूर्ण — अगला चरण →",
     successTitle:(name)=>`हो गया, ${name}! 🎉`,
     successMsg:(agency)=>`आपका आवेदन ${agency} को भेज दिया गया है। यदि कोई उपयुक्त पद है तो वे आमतौर पर कुछ दिनों में संपर्क करेंगे।\n\nशुभकामनाएं! 🙏`,
+    agencyLockedNote:"यह आपकी एजेंसी के दिए लिंक से सेट हुआ है। आगे बढ़ने के लिए Next दबाएं।",
     errRequired:"यह फ़ील्ड आवश्यक है।", errDob:"सही तारीख दर्ज करें। उदाहरण: 15 Jan 1990",
     errPhone:"देश कोड के साथ सही नंबर दर्ज करें।", errEmail:"सही ईमेल दर्ज करें।",
     errSalary:"संख्या दर्ज करें, जैसे 1800", errDate:"तारीख दर्ज करें, जैसे Jan 2022 – Mar 2024",
     reviewSections:{ routing:"एजेंसी रूटिंग", personal:"व्यक्तिगत विवरण", job:"नौकरी प्राथमिकताएं", experience:"कार्य अनुभव", skills:"कौशल और शिक्षा", documents:"अतिरिक्त दस्तावेज़" },
     stepOverrides:{
-      agency:      { label:"एजेंसी",              q:"यह resume किस manpower एजेंसी के लिए है?",                    hint:"एजेंसी का नाम बिल्कुल वैसे ही लिखें जैसा आपको दिया गया है।",                                                                                                         ph:"जैसे: Worklink Manpower Pte Ltd" },
+      agency:      { label:"आपकी एजेंसी",         q:"आप आवेदन कर रहे हैं:",                                         hint:"",                                                                                                                                                             ph:"" },
       scanDoc:     { label:"दस्तावेज़ स्कैन",     q:"फ़ॉर्म तेज़ी से भरना चाहते हैं?",                            hint:"अपना पासपोर्ट, resume या ID की फ़ोटो या PDF अपलोड करें। हम इसे पढ़कर आपके विवरण भर देंगे। सब कुछ आपके ब्राउज़र में चलता है — जमा करने तक कुछ भी आपके डिवाइस से नहीं जाता।" },
       name:        { label:"पूरा नाम",            q:"आपका पूरा नाम क्या है?",                                     hint:"अपना कानूनी पूरा नाम दर्ज करें।",                                                                                                                                     ph:"जैसे: Ahmad bin Ramli" },
       dob:         { label:"जन्म तिथि",           q:"आपकी जन्म तिथि क्या है?",                                   hint:"कैलेंडर से अपनी तारीख चुनें।" },
@@ -1307,12 +1312,13 @@ const TR = {
     naBtn:"প্রযোজ্য নয় / এড়িয়ে যান", doneBtn:"সম্পন্ন — পরবর্তী ধাপ →",
     successTitle:(name)=>`সম্পন্ন হয়েছে, ${name}! 🎉`,
     successMsg:(agency)=>`আপনার আবেদন ${agency}-এ পাঠানো হয়েছে। উপযুক্ত পদ থাকলে সাধারণত কয়েক দিনের মধ্যে যোগাযোগ করা হবে।\n\nশুভকামনা! 🙏`,
+    agencyLockedNote:"এটি আপনার এজেন্সির দেওয়া লিংক থেকে নির্ধারিত হয়েছে। চালিয়ে যেতে Next চাপুন।",
     errRequired:"এই ক্ষেত্রটি প্রয়োজন।", errDob:"সঠিক তারিখ দিন। উদাহরণ: 15 Jan 1990",
     errPhone:"দেশের কোড সহ সঠিক নম্বর দিন।", errEmail:"সঠিক ইমেইল দিন।",
     errSalary:"সংখ্যা দিন, যেমন 1800", errDate:"তারিখ দিন, যেমন Jan 2022 – Mar 2024",
     reviewSections:{ routing:"এজেন্সি রাউটিং", personal:"ব্যক্তিগত বিবরণ", job:"চাকরির পছন্দ", experience:"কর্ম অভিজ্ঞতা", skills:"দক্ষতা ও শিক্ষা", documents:"অতিরিক্ত নথি" },
     stepOverrides:{
-      agency:      { label:"এজেন্সি",          q:"এই resume কোন manpower এজেন্সির জন্য?",                      hint:"আপনাকে দেওয়া এজেন্সির নাম ঠিক সেভাবে টাইপ করুন।",                                                                                                                    ph:"যেমন: Worklink Manpower Pte Ltd" },
+      agency:      { label:"আপনার এজেন্সি",    q:"আপনি আবেদন করছেন:",                                           hint:"",                                                                                                                                                             ph:"" },
       scanDoc:     { label:"নথি স্ক্যান",      q:"ফর্ম দ্রুত পূরণ করতে চান?",                                 hint:"আপনার পাসপোর্ট, resume বা ID-র ছবি বা PDF আপলোড করুন। আমরা এটি পড়ে আপনার তথ্য পূর্ব-পূরণ করব। সবকিছু আপনার ব্রাউজারে চলে — জমা দেওয়া পর্যন্ত কিছুই আপনার ডিভাইস ছেড়ে যায় না।" },
       name:        { label:"পূর্ণ নাম",        q:"আপনার পূর্ণ নাম কী?",                                        hint:"আপনার আইনগত পূর্ণ নাম লিখুন।",                                                                                                                                       ph:"যেমন: Ahmad bin Ramli" },
       dob:         { label:"জন্ম তারিখ",       q:"আপনার জন্ম তারিখ কী?",                                      hint:"ক্যালেন্ডার থেকে আপনার তারিখ নির্বাচন করুন।" },
@@ -1403,7 +1409,7 @@ function showNoLinkError() {
 let PARTNER_CONTEXT = {};
 
 const EXTRA_FIELD_META = {
-  agency: { label: "Singapore agency", ic: "🏬" },
+  agency: { label: "Your agency", ic: "🏬" },
   partnerAgency: { label: "Overseas partner", ic: "🤝" },
   partnerCountry: { label: "Partner country", ic: "🌍" },
   partnerLinkCode: { label: "Partner link code", ic: "🔗" },
@@ -1825,7 +1831,7 @@ function render() {
         <div class="field-error" id="fieldErr"></div>
       `;
       if (agencyLocked) {
-        inner += `<div class="context-note">This partner link already selected the Singapore agency for you. Continue when the agency name looks correct.</div>`;
+        inner += `<div class="context-note">${t("agencyLockedNote")}</div>`;
       }
     }
     if (s.optional) {

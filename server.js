@@ -54,7 +54,14 @@ function getSupabase() {
 }
 // Convenience proxy so existing code using `supabase.from(...)` still works
 const supabase = new Proxy({}, {
-  get(_, prop) { return getSupabase()[prop]; },
+  get(_, prop) {
+    try { return getSupabase()[prop]; }
+    catch (e) {
+      // Return a function that rejects, so async handlers surface a proper error
+      // instead of an uncaught synchronous throw that kills the process.
+      return (...args) => Promise.reject(e);
+    }
+  },
 });
 
 const app = express();
@@ -384,23 +391,26 @@ app.get("/", (_req, res) => res.sendFile(path.join(rootDir, "public", "home.html
 app.get("/resume", (_req, res) => res.sendFile(path.join(rootDir, "public", "index.html")));
 app.get("/apply/:slug", async (req, res) => {
   const slug = normalizeAgencyLinkSlug(req.params.slug);
+  try {
+    // 1. Check Supabase partner_links first
+    const { data: dbLink } = await supabase
+      .from("partner_links")
+      .select("*, agencies(slug, name)")
+      .eq("full_slug", slug)
+      .maybeSingle();
 
-  // 1. Check Supabase partner_links first
-  const { data: dbLink } = await supabase
-    .from("partner_links")
-    .select("*, agencies(slug, name)")
-    .eq("full_slug", slug)
-    .maybeSingle();
-
-  if (dbLink) {
-    if (!dbLink.active) {
-      return res.status(410).type("html").send(linkErrorPage(
-        "This link has been deactivated",
-        "This application link is no longer active. Please contact your agency for an updated link."
-      ));
+    if (dbLink) {
+      if (!dbLink.active) {
+        return res.status(410).type("html").send(linkErrorPage(
+          "This link has been deactivated",
+          "This application link is no longer active. Please contact your agency for an updated link."
+        ));
+      }
+      // Serve the form directly — keep the clean /apply/:slug URL in the browser
+      return res.sendFile(path.join(rootDir, "public", "index.html"));
     }
-    // Serve the form directly — keep the clean /apply/:slug URL in the browser
-    return res.sendFile(path.join(rootDir, "public", "index.html"));
+  } catch (e) {
+    console.warn("/apply/:slug DB error (falling back to legacy):", e.message);
   }
 
   // 2. Fall back to legacy agency-links.json
@@ -417,24 +427,28 @@ app.get("/apply/:slug", async (req, res) => {
 // Public endpoint — resolves a partner link slug to form init data (no auth needed)
 app.get("/api/link/:slug", async (req, res) => {
   const slug = normalizeAgencyLinkSlug(req.params.slug);
-  const { data: dbLink } = await supabase
-    .from("partner_links")
-    .select("id, full_slug, partner_name, partner_country, lock_agency, active, agencies(slug, name)")
-    .eq("full_slug", slug)
-    .maybeSingle();
+  try {
+    const { data: dbLink } = await supabase
+      .from("partner_links")
+      .select("id, full_slug, partner_name, partner_country, lock_agency, active, agencies(slug, name)")
+      .eq("full_slug", slug)
+      .maybeSingle();
 
-  if (!dbLink) return res.status(404).json({ ok: false, error: "Link not found" });
-  if (!dbLink.active) return res.status(410).json({ ok: false, error: "Link deactivated" });
+    if (!dbLink) return res.status(404).json({ ok: false, error: "Link not found" });
+    if (!dbLink.active) return res.status(410).json({ ok: false, error: "Link deactivated" });
 
-  res.json({
-    ok: true,
-    agency: dbLink.agencies.slug,
-    partnerLinkCode: dbLink.full_slug,
-    partnerLinkId: dbLink.id,
-    partnerAgency: dbLink.partner_name || null,
-    partnerCountry: dbLink.partner_country || null,
-    lockAgency: dbLink.lock_agency || false,
-  });
+    res.json({
+      ok: true,
+      agency: dbLink.agencies.slug,
+      partnerLinkCode: dbLink.full_slug,
+      partnerLinkId: dbLink.id,
+      partnerAgency: dbLink.partner_name || null,
+      partnerCountry: dbLink.partner_country || null,
+      lockAgency: dbLink.lock_agency || false,
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: "Service temporarily unavailable" });
+  }
 });
 
 function linkErrorPage(title, message) {
@@ -925,6 +939,21 @@ app.post("/api/admin/wipe", requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
+});
+
+// ─── Global error handler ─────────────────────────────────────────────────────
+// Catches unhandled promise rejections from async route handlers that lack
+// their own try/catch (e.g. missing DB credentials in local dev).
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  console.error("Unhandled route error:", err.message);
+  if (!res.headersSent) {
+    res.status(err.statusCode || 500).json({ ok: false, error: err.message });
+  }
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection (non-fatal):", reason);
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────────
