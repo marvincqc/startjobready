@@ -135,6 +135,44 @@ a { color: inherit; text-decoration: none; }
 .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
 .empty-state { padding: 40px 24px; text-align: center; color: var(--muted); font-size: 14px; }
 
+/* ── ONBOARDING CARD ─────────────────────────────────────────── */
+.onboarding-card {
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 40px; text-align: center;
+}
+.onboarding-eyebrow {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--brand); margin-bottom: 12px;
+}
+.onboarding-title {
+  font-family: "Fraunces", serif; font-size: 26px; letter-spacing: -0.03em;
+  line-height: 1.15; margin-bottom: 10px;
+}
+.onboarding-sub { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 32px; }
+.onboarding-steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  margin-bottom: 32px; text-align: left;
+}
+@media (max-width: 600px) { .onboarding-steps { grid-template-columns: 1fr; } }
+.onboarding-step {
+  background: var(--bg-alt); border-radius: 14px; padding: 18px;
+}
+.onboarding-step-num {
+  width: 28px; height: 28px; border-radius: 8px; background: var(--brand);
+  color: #fff; font-size: 13px; font-weight: 800;
+  display: grid; place-items: center; margin-bottom: 10px;
+}
+.onboarding-step-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.onboarding-step-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.btn-onboarding {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 48px; padding: 0 28px; border-radius: 999px;
+  background: var(--brand); color: #fff; border: none; cursor: pointer;
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 15px; font-weight: 700;
+  transition: background 0.15s;
+}
+.btn-onboarding:hover { background: var(--brand-dark); }
+
 /* ── LINKS TABLE ─────────────────────────────────────────────── */
 .links-list { display: grid; gap: 10px; }
 .link-row {
@@ -433,6 +471,8 @@ a { color: inherit; text-decoration: none; }
   let filterQuery = "";
   let filterNationality = "";
   let filterDebounce = null;
+  let hasLinks = null;     // null = not loaded, true/false = loaded
+  let hasSubmissions = null;
 
   const PLAN_LABELS = { free: "Free", pro: "Pro", scale: "Scale" };
   const TIERS = [
@@ -652,12 +692,20 @@ a { color: inherit; text-decoration: none; }
       const isFiltering = filterQuery || filterNationality;
 
       if (!cursor && list.length === 0) {
-        container.innerHTML = isFiltering
-          ? `<div class="card"><div class="empty-state">No submissions match your search.</div></div>`
-          : `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`;
+        if (isFiltering) {
+          container.innerHTML = `<div class="card"><div class="empty-state">No submissions match your search.</div></div>`;
+        } else {
+          hasSubmissions = false;
+          if (hasLinks === null) {
+            // Links not loaded yet — keep spinner, maybeSwitchToOnboarding will handle render
+          } else {
+            maybeSwitchToOnboarding() || (container.innerHTML = `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`);
+          }
+        }
         loadingMore = false; return;
       }
 
+      hasSubmissions = true;
       if (!cursor) container.innerHTML = `<div class="submissions-list" id="subList"></div>`;
       const subList = document.getElementById("subList");
       list.forEach(s => subList.appendChild(buildSubRow(s)));
@@ -674,6 +722,42 @@ a { color: inherit; text-decoration: none; }
     document.getElementById("submissionsContent").innerHTML = `<div class="spinner"></div>`;
     document.getElementById("loadMoreBtn").style.display = "none";
     loadSubmissions();
+  }
+
+  function maybeSwitchToOnboarding() {
+    if (hasLinks !== false || hasSubmissions !== false) return false;
+    const container = document.getElementById("submissionsContent");
+    container.innerHTML = `
+      <div class="onboarding-card">
+        <div class="onboarding-eyebrow">Welcome to JobReady</div>
+        <h2 class="onboarding-title">You're all set — let's get your first application</h2>
+        <p class="onboarding-sub">It only takes a minute to set up. Here's how it works:</p>
+        <div class="onboarding-steps">
+          <div class="onboarding-step">
+            <div class="onboarding-step-num">1</div>
+            <div class="onboarding-step-title">Create a partner link</div>
+            <div class="onboarding-step-desc">Each link is tied to a sending agency or country. You can have up to 3 on the free plan.</div>
+          </div>
+          <div class="onboarding-step">
+            <div class="onboarding-step-num">2</div>
+            <div class="onboarding-step-title">Share it with workers</div>
+            <div class="onboarding-step-desc">Send the link to your overseas partner or directly to workers via WhatsApp or email.</div>
+          </div>
+          <div class="onboarding-step">
+            <div class="onboarding-step-num">3</div>
+            <div class="onboarding-step-title">Receive applications</div>
+            <div class="onboarding-step-desc">Workers fill in their details in their language. You get notified and can download their PDF resume.</div>
+          </div>
+        </div>
+        <button class="btn-onboarding" id="onboardingCta">
+          Create your first partner link
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>`;
+    document.getElementById("onboardingCta").addEventListener("click", () => {
+      document.querySelector('[data-tab="links"]').click();
+    });
+    return true;
   }
 
   function updateFilterClear() {
@@ -810,10 +894,19 @@ a { color: inherit; text-decoration: none; }
     if (!json.ok) { container.innerHTML = `<p style="color:#c53030;font-size:14px;">${json.error}</p>`; return; }
 
     if (json.links.length === 0) {
-      container.innerHTML = `<div class="card"><div class="empty-state">No partner links yet. Create one to start receiving worker applications.</div></div>`;
+      hasLinks = false;
+      // If submissions already reported empty, switch to onboarding
+      if (!maybeSwitchToOnboarding() && hasSubmissions === false) {
+        document.getElementById("submissionsContent").innerHTML =
+          `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`;
+      }
+      container.innerHTML = `<div class="card"><div class="empty-state">No partner links yet. Click <strong>New link</strong> above to create your first one.</div></div>`;
+      // Auto-open the new link form on first visit
+      document.getElementById("newLinkForm").classList.add("open");
       return;
     }
 
+    hasLinks = true;
     container.innerHTML = `<div class="links-list" id="linksList"></div>`;
     json.links.forEach(l => document.getElementById("linksList").appendChild(buildLinkRow(l)));
   }
