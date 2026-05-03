@@ -378,6 +378,64 @@ img { display: block; width: 100%; height: 100%; object-fit: cover; }
 }
 .btn-brand:hover { background: var(--brand-dark); }
 
+/* ── CONTACT ─────────────────────────────────────────────────── */
+.contact {
+  background: var(--bg);
+  padding: 96px 0;
+  border-top: 1px solid var(--line);
+}
+.contact-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.contact-copy h2 {
+  font-family: "Fraunces", serif;
+  font-size: clamp(28px, 3vw, 40px);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+.contact-copy p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.contact-form { display: grid; gap: 14px; }
+.contact-field { display: grid; gap: 6px; }
+.contact-field label {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+}
+.contact-field input,
+.contact-field textarea {
+  width: 100%; padding: 12px 16px;
+  border: 1.5px solid var(--line); border-radius: 12px;
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 14px; color: var(--ink);
+  background: var(--bg-alt); outline: none; transition: border-color 0.15s;
+  resize: none;
+}
+.contact-field input:focus,
+.contact-field textarea:focus { border-color: var(--brand); background: #fff; }
+.contact-field textarea { min-height: 120px; }
+.contact-submit {
+  height: 48px; padding: 0 28px; border-radius: 999px;
+  background: var(--brand); color: #fff; border: none; cursor: pointer;
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 14px; font-weight: 700;
+  transition: background 0.15s; justify-self: start;
+}
+.contact-submit:hover { background: var(--brand-dark); }
+.contact-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.contact-msg {
+  font-size: 13px; padding: 10px 14px; border-radius: 8px; display: none;
+}
+.contact-msg.success { background: #f0fff4; color: #276749; display: block; }
+.contact-msg.error   { background: #fff5f5; color: #c53030; display: block; }
+@media (max-width: 760px) {
+  .contact-inner { grid-template-columns: 1fr; gap: 36px; }
+}
+
 /* ── FOOTER ──────────────────────────────────────────────────── */
 .footer {
   background: var(--ink);
@@ -679,8 +737,36 @@ img { display: block; width: 100%; height: 100%; object-fit: cover; }
   </div>
 </section>
 
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="shell">
+    <div class="contact-inner">
+      <div class="contact-copy">
+        <h2>Get in touch.</h2>
+        <p>Have a question about JobReady, pricing, or a custom setup? Send us a message and we'll get back to you.</p>
+      </div>
+      <form class="contact-form" id="contactForm">
+        <div class="contact-field">
+          <label for="contactName">Your name</label>
+          <input type="text" id="contactName" placeholder="Ahmad Razif" required>
+        </div>
+        <div class="contact-field">
+          <label for="contactEmail">Email address</label>
+          <input type="email" id="contactEmail" placeholder="you@agency.com" required>
+        </div>
+        <div class="contact-field">
+          <label for="contactMessage">Message</label>
+          <textarea id="contactMessage" placeholder="Tell us what you need…" required></textarea>
+        </div>
+        <div class="contact-msg" id="contactMsg"></div>
+        <button class="contact-submit" type="submit">Send message</button>
+      </form>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
-<footer class="footer" id="contact">
+<footer class="footer">
   <div class="shell">
     <div class="footer-inner">
       <div class="footer-brand">
@@ -721,6 +807,41 @@ sb.auth.getSession().then(({ data: { session } }) => {
     heroCta.textContent = "Go to dashboard";
     heroCta.href        = "/dashboard";
     if (footerCta) { footerCta.textContent = "Dashboard"; footerCta.href = "/dashboard"; }
+  }
+});
+
+// Contact form
+document.getElementById("contactForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector(".contact-submit");
+  const msg = document.getElementById("contactMsg");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+  msg.className = "contact-msg";
+  try {
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: document.getElementById("contactName").value.trim(),
+        email: document.getElementById("contactEmail").value.trim(),
+        message: document.getElementById("contactMessage").value.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.textContent = "Message sent! We'll get back to you soon.";
+      msg.className = "contact-msg success";
+      e.target.reset();
+    } else {
+      throw new Error(data.error || "Something went wrong.");
+    }
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = "contact-msg error";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Send message";
   }
 });
 </script>

@@ -945,6 +945,35 @@ app.post("/api/admin/wipe", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// ─── Contact form ─────────────────────────────────────────────────────────────
+app.post("/api/contact", rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
+  const { name, email, message } = req.body || {};
+  if (!name || !email || !message) return res.status(400).json({ ok: false, error: "All fields required." });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ ok: false, error: "Invalid email." });
+  if (message.length > 2000) return res.status(400).json({ ok: false, error: "Message too long." });
+
+  if (resend) {
+    try {
+      await resend.emails.send({
+        from: "JobReady <notifications@jobready.sg>",
+        to: SUPER_ADMIN,
+        reply_to: email,
+        subject: `Contact form: ${name}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+            <h2 style="margin:0 0 16px;">New contact message</h2>
+            <p style="margin:0 0 6px;"><strong>Name:</strong> ${name}</p>
+            <p style="margin:0 0 16px;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+            <div style="background:#f5f2ec;border-radius:10px;padding:16px;white-space:pre-wrap;font-size:14px;line-height:1.6;">${message.replace(/</g,"&lt;")}</div>
+          </div>`,
+      });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: "Failed to send message." });
+    }
+  }
+  res.json({ ok: true });
+});
+
 // ─── Global error handler ─────────────────────────────────────────────────────
 // Catches unhandled promise rejections from async route handlers that lack
 // their own try/catch (e.g. missing DB credentials in local dev).
