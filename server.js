@@ -10,35 +10,8 @@ const { pipeline } = require("stream/promises");
 require("dotenv").config();
 
 const { createClient } = require("@supabase/supabase-js");
-const { Resend } = require("resend");
 const { generateAndStorePDF, buildPDF } = require("./src/pdf");
 const packageInfo = require("./package.json");
-
-// Resend email client — gracefully no-ops if API key not set
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
-async function sendSubmissionEmail(agency, workerName, submissionId) {
-  if (!resend || !agency.contact_email) return;
-  const dashboardUrl = `${process.env.APP_URL || "https://startjobready.onrender.com"}/dashboard`;
-  try {
-    await resend.emails.send({
-      from: "JobReady <notifications@jobready.sg>",
-      to: agency.contact_email,
-      subject: `New application from ${workerName || "a worker"}`,
-      html: `
-        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;">
-          <h2 style="margin:0 0 8px;">New application received</h2>
-          <p style="color:#555;margin:0 0 20px;">
-            <strong>${workerName || "A worker"}</strong> just submitted an application to <strong>${agency.name}</strong>.
-          </p>
-          <a href="${dashboardUrl}" style="display:inline-block;padding:12px 24px;background:#c85e38;color:#fff;border-radius:999px;text-decoration:none;font-weight:700;">View in dashboard</a>
-          <p style="color:#aaa;font-size:12px;margin-top:24px;">Reference: ${submissionId}</p>
-        </div>`,
-    });
-  } catch (e) {
-    console.warn("Email send failed (non-fatal):", e.message);
-  }
-}
 
 // Supabase admin client (service role for server-side inserts + JWT validation)
 // Lazy init so missing env vars don't crash the server on startup
@@ -541,20 +514,6 @@ app.get("/api/agency/me", requireAuth, async (req, res) => {
   res.json({ ok: true, agency: { ...data, plan: data.plan || "free" }, usage });
 });
 
-app.patch("/api/agency/me", requireAuth, async (req, res) => {
-  const { contact_email } = req.body || {};
-  if (!contact_email) return res.status(400).json({ ok: false, error: "contact_email required" });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact_email)) return res.status(400).json({ ok: false, error: "Invalid email." });
-
-  const { error } = await supabase
-    .from("agencies")
-    .update({ contact_email })
-    .eq("auth_id", req.user.id);
-
-  if (error) return res.status(500).json({ ok: false, error: error.message });
-  res.json({ ok: true });
-});
-
 // ─── Partner links ────────────────────────────────────────────────────────────
 app.get("/api/links", requireAuth, async (req, res) => {
   const { data: agency } = await supabase
@@ -784,7 +743,7 @@ app.post("/submit", rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) =
     if (data.agency) {
       const { data: agencyRow } = await supabase
         .from("agencies")
-        .select("id, plan, name, contact_email")
+        .select("id, plan, name")
         .eq("slug", normalizeAgencyLinkSlug(data.agency))
         .maybeSingle();
       if (agencyRow) resolvedAgency = agencyRow;
@@ -840,9 +799,6 @@ app.post("/submit", rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) =
         attachment_count: result.attachmentCount || 0,
       }).select("id").single();
 
-      if (resolvedAgency && insertedRow) {
-        sendSubmissionEmail(resolvedAgency, data.name, insertedRow.id);
-      }
     } catch (dbErr) {
       console.warn("Supabase submission record error (non-fatal):", dbErr.message);
     }

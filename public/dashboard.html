@@ -425,7 +425,6 @@ a { color: inherit; text-decoration: none; }
     <div class="tabs">
       <button class="tab active" data-tab="submissions">Submissions</button>
       <button class="tab" data-tab="links">Partner Links</button>
-      <button class="tab" data-tab="settings">Settings</button>
     </div>
 
     <!-- Usage card -->
@@ -456,25 +455,6 @@ a { color: inherit; text-decoration: none; }
       </div>
       <div id="submissionsContent"><div class="spinner"></div></div>
       <button class="load-more-btn" id="loadMoreBtn" style="display:none;">Load more</button>
-    </div>
-
-    <!-- Settings panel -->
-    <div class="tab-panel" id="panel-settings">
-      <div class="section-header">
-        <h2 class="section-title">Settings</h2>
-      </div>
-      <div class="card" style="padding:28px;max-width:480px;">
-        <div class="drawer-label" style="margin-bottom:16px;">Notification email</div>
-        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">New submission notifications are sent to this address. Update it if you want alerts to go elsewhere.</p>
-        <div class="form-group" style="margin-bottom:14px;">
-          <label>Email address</label>
-          <input type="email" id="settingsEmail" placeholder="you@agency.com">
-        </div>
-        <div id="settingsMsg"></div>
-        <div class="form-actions" style="margin-top:4px;">
-          <button class="btn-save" id="saveSettingsBtn">Save</button>
-        </div>
-      </div>
     </div>
 
     <!-- Links panel -->
@@ -615,9 +595,6 @@ a { color: inherit; text-decoration: none; }
       }
 
       agencySlug = meJson.agency.slug;
-      if (meJson.agency.contact_email) {
-        document.getElementById("settingsEmail").value = meJson.agency.contact_email;
-      }
       document.getElementById("agencyBadge").textContent = meJson.agency.name;
       document.title = `${meJson.agency.name} — JobReady`;
 
@@ -745,26 +722,6 @@ a { color: inherit; text-decoration: none; }
   // ── Sign out ────────────────────────────────────────────────────────────────
   document.getElementById("signOutBtn").addEventListener("click", () => {
     sb.auth.signOut().catch(() => {}); // fire-and-forget; SIGNED_OUT event handles the redirect
-  });
-
-  // ── Settings ────────────────────────────────────────────────────────────────
-  document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
-    const btn = document.getElementById("saveSettingsBtn");
-    const msgEl = document.getElementById("settingsMsg");
-    const email = document.getElementById("settingsEmail").value.trim();
-    if (!email) return;
-    btn.disabled = true; btn.textContent = "Saving…";
-    msgEl.innerHTML = "";
-    const res = await fetch("/api/agency/me", {
-      method: "PATCH",
-      headers: { ...auth(), "Content-Type": "application/json" },
-      body: JSON.stringify({ contact_email: email }),
-    });
-    const json = await res.json();
-    btn.disabled = false; btn.textContent = "Save";
-    msgEl.innerHTML = json.ok
-      ? `<div class="form-msg" style="background:#f0fff4;color:#276749;margin-bottom:0;">Saved.</div>`
-      : `<div class="form-msg error">${esc(json.error)}</div>`;
   });
 
   // ── Submissions ─────────────────────────────────────────────────────────────
