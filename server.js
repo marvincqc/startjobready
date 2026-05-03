@@ -951,27 +951,53 @@ app.post("/api/contact", rateLimit({ windowMs: 60_000, max: 5 }), async (req, re
   if (!name || !email || !message) return res.status(400).json({ ok: false, error: "All fields required." });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ ok: false, error: "Invalid email." });
   if (message.length > 2000) return res.status(400).json({ ok: false, error: "Message too long." });
-
-  if (resend) {
-    try {
-      await resend.emails.send({
-        from: "JobReady <notifications@jobready.sg>",
-        to: SUPER_ADMIN,
-        reply_to: email,
-        subject: `Contact form: ${name}`,
-        html: `
-          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;">
-            <h2 style="margin:0 0 16px;">New contact message</h2>
-            <p style="margin:0 0 6px;"><strong>Name:</strong> ${name}</p>
-            <p style="margin:0 0 16px;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-            <div style="background:#f5f2ec;border-radius:10px;padding:16px;white-space:pre-wrap;font-size:14px;line-height:1.6;">${message.replace(/</g,"&lt;")}</div>
-          </div>`,
-      });
-    } catch (err) {
-      return res.status(500).json({ ok: false, error: "Failed to send message." });
-    }
+  try {
+    const { error } = await supabase.from("contact_messages").insert({ name, email, message });
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: "Failed to save message." });
   }
-  res.json({ ok: true });
+});
+
+// ─── Admin: contact messages ──────────────────────────────────────────────────
+app.get("/api/admin/messages", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("contact_messages")
+      .select("id, name, email, message, read, created_at")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ ok: true, messages: data });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.patch("/api/admin/messages/:id/read", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from("contact_messages")
+      .update({ read: true })
+      .eq("id", req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.delete("/api/admin/messages/:id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from("contact_messages")
+      .delete()
+      .eq("id", req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 // ─── Global error handler ─────────────────────────────────────────────────────

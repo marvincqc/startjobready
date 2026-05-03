@@ -36,7 +36,7 @@ a { color: inherit; text-decoration: none; }
 
 h2 { font-family: "Fraunces", serif; font-size: 22px; letter-spacing: -0.03em; margin-bottom: 16px; }
 
-.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
 .stat-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 24px; }
 .stat-label { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; }
@@ -82,6 +82,15 @@ tr:hover td { background: #fafaf9; }
 
 .usage-badge { font-size: 11px; color: var(--muted); white-space: nowrap; }
 .usage-badge .at-cap { color: var(--danger); font-weight: 700; }
+
+.unread-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); margin-right: 6px; }
+.msg-row { cursor: pointer; }
+.msg-row.unread td { font-weight: 700; }
+.msg-row.unread td:first-child::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); margin-right: 8px; vertical-align: middle; }
+.msg-preview { color: var(--muted); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
+.msg-body { font-size: 14px; line-height: 1.7; white-space: pre-wrap; background: var(--bg); border-radius: 10px; padding: 14px; margin-top: 4px; }
+.reply-link { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; margin-top: 12px; }
+.reply-link:hover { background: #1c3447; }
 
 .load-more { display: flex; justify-content: center; padding: 16px; border-top: 1px solid var(--line); }
 .btn-more { font-size: 13px; font-weight: 700; color: var(--brand); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 20px; cursor: pointer; }
@@ -147,6 +156,7 @@ tr:hover td { background: #fafaf9; }
     <div class="stat-card"><div class="stat-label">Agencies</div><div class="stat-value" id="statAgencies">—</div></div>
     <div class="stat-card"><div class="stat-label">Submissions</div><div class="stat-value" id="statSubmissions">—</div></div>
     <div class="stat-card"><div class="stat-label">Auth users</div><div class="stat-value" id="statUsers">—</div></div>
+    <div class="stat-card"><div class="stat-label">Unread messages</div><div class="stat-value" id="statUnread">—</div></div>
   </div>
 
   <!-- Agencies -->
@@ -162,6 +172,12 @@ tr:hover td { background: #fafaf9; }
     <div class="load-more" id="loadMoreWrap" style="display:none;">
       <button class="btn-more" id="loadMoreBtn">Load more</button>
     </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="card">
+    <div class="card-head"><h2>Contact Messages</h2></div>
+    <div id="messagesContent"><div class="spinner"></div></div>
   </div>
 
   <!-- Danger zone -->
@@ -237,6 +253,7 @@ tr:hover td { background: #fafaf9; }
 
     await loadAgencies();
     loadSubmissions();
+    loadMessages();
   });
 
   document.getElementById("signOutBtn").addEventListener("click", () => {
@@ -462,6 +479,76 @@ tr:hover td { background: #fafaf9; }
     if (e.target === document.getElementById("drawerOverlay"))
       document.getElementById("drawerOverlay").classList.remove("open");
   });
+
+  // ── Messages ────────────────────────────────────────────────────────────────
+  async function loadMessages() {
+    const el = document.getElementById("messagesContent");
+    const res = await fetch("/api/admin/messages", { headers: auth() });
+    const json = await res.json();
+    if (!json.ok) { el.innerHTML = `<div class="empty" style="color:var(--danger)">${esc(json.error)}</div>`; return; }
+    if (!json.messages.length) { el.innerHTML = `<div class="empty">No messages yet.</div>`; return; }
+
+    const unread = json.messages.filter(m => !m.read).length;
+    document.getElementById("statUnread").textContent = unread;
+
+    const rows = json.messages.map(m => `
+      <tr class="msg-row${m.read ? "" : " unread"}" id="msg-row-${esc(m.id)}" onclick="openMessage('${esc(m.id)}')">
+        <td>${esc(m.name)}</td>
+        <td style="color:var(--muted)">${esc(m.email)}</td>
+        <td><span class="msg-preview">${esc(m.message)}</span></td>
+        <td style="white-space:nowrap">${fmt(m.created_at)}</td>
+        <td><button class="btn-del" onclick="event.stopPropagation();deleteMessage('${esc(m.id)}')">Delete</button></td>
+      </tr>`).join("");
+
+    el.innerHTML = `<table>
+      <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Date</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  window.openMessage = async function(id) {
+    const res = await fetch("/api/admin/messages", { headers: auth() });
+    const json = await res.json();
+    if (!json.ok) return;
+    const m = json.messages.find(x => x.id === id);
+    if (!m) return;
+
+    const overlay = document.getElementById("drawerOverlay");
+    const body    = document.getElementById("drawerBody");
+    document.getElementById("drawerName").textContent = m.name;
+    body.innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-label">From</div>
+        <div class="drawer-fields">
+          <div class="drawer-field"><div class="drawer-field-key">Name</div><div class="drawer-field-val">${esc(m.name)}</div></div>
+          <div class="drawer-field"><div class="drawer-field-key">Email</div><div class="drawer-field-val">${esc(m.email)}</div></div>
+          <div class="drawer-field"><div class="drawer-field-key">Date</div><div class="drawer-field-val">${fmt(m.created_at)}</div></div>
+        </div>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-label">Message</div>
+        <div class="msg-body">${esc(m.message)}</div>
+        <a class="reply-link" href="mailto:${esc(m.email)}?subject=Re: your JobReady enquiry">Reply by email</a>
+      </div>`;
+    overlay.classList.add("open");
+
+    if (!m.read) {
+      await fetch(`/api/admin/messages/${encodeURIComponent(id)}/read`, { method: "PATCH", headers: auth() });
+      const row = document.getElementById("msg-row-" + id);
+      if (row) row.classList.remove("unread");
+      const unreadEl = document.getElementById("statUnread");
+      unreadEl.textContent = Math.max(0, parseInt(unreadEl.textContent || "0") - 1);
+    }
+  };
+
+  window.deleteMessage = async function(id) {
+    if (!confirm("Delete this message? This cannot be undone.")) return;
+    const res = await fetch(`/api/admin/messages/${encodeURIComponent(id)}`, { method: "DELETE", headers: auth() });
+    const json = await res.json();
+    if (!json.ok) return alert("Error: " + json.error);
+    document.getElementById("msg-row-" + id)?.remove();
+    loadMessages();
+  };
 
   // ── Stats refresh ───────────────────────────────────────────────────────────
   async function refreshStats() {
