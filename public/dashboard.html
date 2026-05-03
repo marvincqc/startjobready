@@ -991,8 +991,12 @@ a { color: inherit; text-decoration: none; }
     };
 
     const data = s.data || {};
-    // Build all editable fields: top-level + every key in s.data
-    const allKeys = Object.keys(data);
+    // All data keys in display order — skip top-level duplicates
+    const DATA_KEYS = ["dob","country","city","phone","email","workArrange","availability",
+      "salary","experience","job1Title","job1Company","job1Dates",
+      "job2Title","job2Company","job2Dates","job3Title","job3Company","job3Dates",
+      "skills","certs","education","englishLevel","otherLangs",
+      "passportNum","passportExpiry","wpStatus","sgExperience","notes"];
 
     const fieldsHtml = `
       <div class="drawer-edit-field">
@@ -1007,7 +1011,7 @@ a { color: inherit; text-decoration: none; }
         <label>Job type</label>
         <input type="text" data-edit="job_type" value="${esc(s.job_type || "")}">
       </div>
-      ${allKeys.filter(k => !["name","nationality","jobType"].includes(k)).map(k => `
+      ${DATA_KEYS.map(k => `
       <div class="drawer-edit-field">
         <label>${esc(FIELD_LABELS[k] || k)}</label>
         <input type="text" data-edit-data="${esc(k)}" value="${esc(String(data[k] ?? ""))}">
