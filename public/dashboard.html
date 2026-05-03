@@ -320,6 +320,24 @@ a { color: inherit; text-decoration: none; }
   text-decoration: none;
 }
 .btn-download:hover { background: #1c3447; }
+.btn-edit-sub {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 40px; border-radius: 999px;
+  background: transparent; color: var(--ink);
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 13px; font-weight: 700;
+  border: 1.5px solid var(--line); cursor: pointer; margin-top: 8px;
+  transition: border-color 0.15s;
+}
+.btn-edit-sub:hover { border-color: var(--ink); }
+.drawer-edit-field { display: grid; gap: 5px; margin-bottom: 12px; }
+.drawer-edit-field label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.drawer-edit-field input, .drawer-edit-field select {
+  width: 100%; height: 40px; padding: 0 12px;
+  border: 1.5px solid var(--line); border-radius: 10px;
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 14px; color: var(--ink);
+  background: var(--bg-alt); outline: none; transition: border-color 0.15s;
+}
+.drawer-edit-field input:focus, .drawer-edit-field select:focus { border-color: var(--brand); background: #fff; }
 .btn-delete-sub {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; height: 40px; border-radius: 999px;
@@ -407,6 +425,7 @@ a { color: inherit; text-decoration: none; }
     <div class="tabs">
       <button class="tab active" data-tab="submissions">Submissions</button>
       <button class="tab" data-tab="links">Partner Links</button>
+      <button class="tab" data-tab="settings">Settings</button>
     </div>
 
     <!-- Usage card -->
@@ -437,6 +456,25 @@ a { color: inherit; text-decoration: none; }
       </div>
       <div id="submissionsContent"><div class="spinner"></div></div>
       <button class="load-more-btn" id="loadMoreBtn" style="display:none;">Load more</button>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="tab-panel" id="panel-settings">
+      <div class="section-header">
+        <h2 class="section-title">Settings</h2>
+      </div>
+      <div class="card" style="padding:28px;max-width:480px;">
+        <div class="drawer-label" style="margin-bottom:16px;">Notification email</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">New submission notifications are sent to this address. Update it if you want alerts to go elsewhere.</p>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Email address</label>
+          <input type="email" id="settingsEmail" placeholder="you@agency.com">
+        </div>
+        <div id="settingsMsg"></div>
+        <div class="form-actions" style="margin-top:4px;">
+          <button class="btn-save" id="saveSettingsBtn">Save</button>
+        </div>
+      </div>
     </div>
 
     <!-- Links panel -->
@@ -488,7 +526,7 @@ a { color: inherit; text-decoration: none; }
       <button class="upgrade-close" id="upgradeClose" aria-label="Close">✕</button>
     </div>
     <div class="tiers" id="tiersGrid"></div>
-    <p style="font-size:12px;color:var(--muted);margin-top:14px;">Plans renew monthly. Email <a href="mailto:upgrade@jobready.sg" style="color:var(--brand);font-weight:700;">upgrade@jobready.sg</a> with any questions.</p>
+    <p style="font-size:12px;color:var(--muted);margin-top:14px;">Plans renew monthly. <a href="/#contact" style="color:var(--brand);font-weight:700;">Contact us</a> with any questions.</p>
   </div>
 </div>
 
@@ -577,6 +615,9 @@ a { color: inherit; text-decoration: none; }
       }
 
       agencySlug = meJson.agency.slug;
+      if (meJson.agency.contact_email) {
+        document.getElementById("settingsEmail").value = meJson.agency.contact_email;
+      }
       document.getElementById("agencyBadge").textContent = meJson.agency.name;
       document.title = `${meJson.agency.name} — JobReady`;
 
@@ -667,7 +708,7 @@ a { color: inherit; text-decoration: none; }
         ? `<span class="tier-cta disabled">Current plan</span>`
         : (t.key === "free"
             ? `<span class="tier-cta disabled">—</span>`
-            : `<a class="tier-cta" href="mailto:upgrade@jobready.sg?subject=${encodeURIComponent("Upgrade to " + t.name)}">Contact us</a>`);
+            : `<a class="tier-cta" href="/#contact">Contact us</a>`);
       return `
         <div class="tier${isCurrent ? " current" : ""}">
           <div class="tier-name">${esc(t.name)}</div>
@@ -704,6 +745,26 @@ a { color: inherit; text-decoration: none; }
   // ── Sign out ────────────────────────────────────────────────────────────────
   document.getElementById("signOutBtn").addEventListener("click", () => {
     sb.auth.signOut().catch(() => {}); // fire-and-forget; SIGNED_OUT event handles the redirect
+  });
+
+  // ── Settings ────────────────────────────────────────────────────────────────
+  document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("saveSettingsBtn");
+    const msgEl = document.getElementById("settingsMsg");
+    const email = document.getElementById("settingsEmail").value.trim();
+    if (!email) return;
+    btn.disabled = true; btn.textContent = "Saving…";
+    msgEl.innerHTML = "";
+    const res = await fetch("/api/agency/me", {
+      method: "PATCH",
+      headers: { ...auth(), "Content-Type": "application/json" },
+      body: JSON.stringify({ contact_email: email }),
+    });
+    const json = await res.json();
+    btn.disabled = false; btn.textContent = "Save";
+    msgEl.innerHTML = json.ok
+      ? `<div class="form-msg" style="background:#f0fff4;color:#276749;margin-bottom:0;">Saved.</div>`
+      : `<div class="form-msg error">${esc(json.error)}</div>`;
   });
 
   // ── Submissions ─────────────────────────────────────────────────────────────
@@ -868,19 +929,19 @@ a { color: inherit; text-decoration: none; }
     if (!json.ok) { body.innerHTML = `<p style="color:#c53030;">${json.error}</p>`; return; }
 
     const s = json.submission;
-    const name = s.worker_name || "Unknown";
-    document.getElementById("drawerName").textContent = name;
+    document.getElementById("drawerName").textContent = s.worker_name || "Unknown";
+    const pdfUrl = s.pdf_path ? `/api/pdf/download?id=${encodeURIComponent(s.id)}&token=${encodeURIComponent(token)}` : null;
+    renderDrawerView(s, pdfUrl, body);
+  }
 
+  function renderDrawerView(s, pdfUrl, body) {
     const date = new Date(s.created_at).toLocaleString("en-SG");
     const fields = [
       { k: "Nationality", v: s.nationality },
-      { k: "Job type", v: s.job_type },
-      { k: "Submitted", v: date },
+      { k: "Job type",    v: s.job_type },
+      { k: "Submitted",   v: date },
       { k: "Attachments", v: s.attachment_count || 0 },
     ];
-
-    const pdfUrl = s.pdf_path ? `/api/pdf/download?id=${encodeURIComponent(s.id)}&token=${encodeURIComponent(token)}` : null;
-
     body.innerHTML = `
       <div class="drawer-section">
         <div class="drawer-label">Details</div>
@@ -901,12 +962,79 @@ a { color: inherit; text-decoration: none; }
         </a>
       </div>` : ""}
       <div class="drawer-section">
+        <button class="btn-edit-sub" id="editSubBtn">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Edit submission
+        </button>
         <button class="btn-delete-sub" onclick="deleteSubmission('${s.id}')">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3h9M5 3V2h3v1M10 3l-.7 8H3.7L3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Delete submission
         </button>
       </div>
     `;
+    document.getElementById("editSubBtn").addEventListener("click", () => renderDrawerEdit(s, pdfUrl, body));
+  }
+
+  function renderDrawerEdit(s, pdfUrl, body) {
+    const NATIONALITIES = ["Bangladeshi","Chinese","Filipino","Indian","Indonesian","Malaysian","Myanmarese","Singaporean","Sri Lankan","Thai","Other"];
+    body.innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-label">Edit submission</div>
+        <div class="drawer-edit-field">
+          <label>Full name</label>
+          <input type="text" id="editName" value="${esc(s.worker_name || "")}">
+        </div>
+        <div class="drawer-edit-field">
+          <label>Nationality</label>
+          <select id="editNationality">
+            ${NATIONALITIES.map(n => `<option${s.nationality === n ? " selected" : ""}>${n}</option>`).join("")}
+          </select>
+        </div>
+        <div class="drawer-edit-field">
+          <label>Job type</label>
+          <input type="text" id="editJobType" value="${esc(s.job_type || "")}">
+        </div>
+      </div>
+      <div id="editSubMsg"></div>
+      <div class="drawer-section">
+        <button class="btn-save" id="saveSubBtn" style="width:100%;height:44px;border-radius:999px;">Save changes</button>
+        <button class="btn-cancel" id="cancelSubBtn" style="width:100%;height:40px;border-radius:999px;margin-top:8px;">Cancel</button>
+      </div>
+    `;
+    document.getElementById("cancelSubBtn").addEventListener("click", () => renderDrawerView(s, pdfUrl, body));
+    document.getElementById("saveSubBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("saveSubBtn");
+      const msgEl = document.getElementById("editSubMsg");
+      btn.disabled = true; btn.textContent = "Saving…";
+      const updates = {
+        worker_name: document.getElementById("editName").value.trim(),
+        nationality: document.getElementById("editNationality").value,
+        job_type:    document.getElementById("editJobType").value.trim(),
+      };
+      const res = await fetch(`/api/submissions/${encodeURIComponent(s.id)}`, {
+        method: "PATCH",
+        headers: { ...auth(), "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      const json = await res.json();
+      btn.disabled = false; btn.textContent = "Save changes";
+      if (!json.ok) {
+        msgEl.innerHTML = `<p style="color:#c53030;font-size:13px;margin-bottom:12px;">${esc(json.error)}</p>`;
+        return;
+      }
+      // Update local copy and re-render view
+      Object.assign(s, updates);
+      document.getElementById("drawerName").textContent = updates.worker_name || s.worker_name;
+      // Refresh the row in the list
+      const row = document.querySelector(`[data-id="${s.id}"]`);
+      if (row) {
+        const nameEl = row.querySelector(".sub-name");
+        const metaEl = row.querySelector(".sub-meta");
+        if (nameEl) nameEl.textContent = updates.worker_name;
+        if (metaEl) metaEl.textContent = `${updates.nationality} · ${updates.job_type}`;
+      }
+      renderDrawerView(s, pdfUrl, body);
+    });
   }
 
   window.deleteSubmission = async function(id) {

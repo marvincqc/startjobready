@@ -541,6 +541,20 @@ app.get("/api/agency/me", requireAuth, async (req, res) => {
   res.json({ ok: true, agency: { ...data, plan: data.plan || "free" }, usage });
 });
 
+app.patch("/api/agency/me", requireAuth, async (req, res) => {
+  const { contact_email } = req.body || {};
+  if (!contact_email) return res.status(400).json({ ok: false, error: "contact_email required" });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact_email)) return res.status(400).json({ ok: false, error: "Invalid email." });
+
+  const { error } = await supabase
+    .from("agencies")
+    .update({ contact_email })
+    .eq("auth_id", req.user.id);
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  res.json({ ok: true });
+});
+
 // ─── Partner links ────────────────────────────────────────────────────────────
 app.get("/api/links", requireAuth, async (req, res) => {
   const { data: agency } = await supabase
@@ -700,6 +714,31 @@ app.get("/api/submissions/:id", requireAuth, async (req, res) => {
   if (!data) return res.status(404).json({ ok: false, error: "Not found" });
 
   res.json({ ok: true, submission: data });
+});
+
+app.patch("/api/submissions/:id", requireAuth, async (req, res) => {
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+  if (!agency) return res.status(403).json({ ok: false, error: "Forbidden" });
+
+  const allowed = ["worker_name", "nationality", "job_type", "data"];
+  const updates = {};
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
+  if (!Object.keys(updates).length) return res.status(400).json({ ok: false, error: "Nothing to update." });
+
+  const { error } = await supabase
+    .from("submissions")
+    .update(updates)
+    .eq("id", req.params.id)
+    .eq("agency_id", agency.id);
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  res.json({ ok: true });
 });
 
 app.delete("/api/submissions/:id", requireAuth, async (req, res) => {
