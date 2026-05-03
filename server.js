@@ -621,23 +621,19 @@ app.get("/api/submissions", requireAuth, async (req, res) => {
   const q = (req.query.q || "").trim();
   const nationality = (req.query.nationality || "").trim();
 
-  const isAdmin = req.user.email === SUPER_ADMIN;
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+  if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
 
   let query = supabase
     .from("submissions")
     .select("id, worker_name, nationality, job_type, attachment_count, created_at, agency_id, partner_link_id")
+    .eq("agency_id", agency.id)
     .order("created_at", { ascending: false })
     .limit(limit);
-
-  if (!isAdmin) {
-    const { data: agency } = await supabase
-      .from("agencies")
-      .select("id")
-      .eq("auth_id", req.user.id)
-      .maybeSingle();
-    if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
-    query = query.eq("agency_id", agency.id);
-  }
 
   if (q) query = query.ilike("worker_name", `%${q}%`);
   if (nationality) query = query.eq("nationality", nationality);
@@ -651,24 +647,19 @@ app.get("/api/submissions", requireAuth, async (req, res) => {
 });
 
 app.get("/api/submissions/:id", requireAuth, async (req, res) => {
-  const isAdmin = req.user.email === SUPER_ADMIN;
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("id")
+    .eq("auth_id", req.user.id)
+    .maybeSingle();
+  if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("submissions")
     .select("*")
-    .eq("id", req.params.id);
-
-  if (!isAdmin) {
-    const { data: agency } = await supabase
-      .from("agencies")
-      .select("id")
-      .eq("auth_id", req.user.id)
-      .maybeSingle();
-    if (!agency) return res.status(404).json({ ok: false, error: "Agency not found" });
-    query = query.eq("agency_id", agency.id);
-  }
-
-  const { data, error } = await query.maybeSingle();
+    .eq("id", req.params.id)
+    .eq("agency_id", agency.id)
+    .maybeSingle();
   if (error) return res.status(500).json({ ok: false, error: error.message });
   if (!data) return res.status(404).json({ ok: false, error: "Not found" });
 
