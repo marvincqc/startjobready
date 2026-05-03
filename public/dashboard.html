@@ -977,7 +977,7 @@ a { color: inherit; text-decoration: none; }
 
   function renderDrawerEdit(s, pdfUrl, body) {
     const FIELD_LABELS = {
-      agency:"Agency", name:"Full name", dob:"Date of birth", nationality:"Nationality",
+      name:"Full name", dob:"Date of birth", nationality:"Nationality",
       country:"Country", city:"City", phone:"Phone", email:"Email",
       jobType:"Job type", workArrange:"Work arrangement", availability:"Availability",
       salary:"Expected salary (SGD)", experience:"Experience",
@@ -985,38 +985,62 @@ a { color: inherit; text-decoration: none; }
       job2Title:"Job 2 title", job2Company:"Job 2 company", job2Dates:"Job 2 dates",
       job3Title:"Job 3 title", job3Company:"Job 3 company", job3Dates:"Job 3 dates",
       skills:"Skills", certs:"Certifications", education:"Education",
-      englishLevel:"English level", otherLangs:"Other languages",
-      passportNum:"Passport number", passportExpiry:"Passport expiry",
-      wpStatus:"Work permit status", sgExperience:"SG experience", notes:"Additional notes",
+      languages:"Languages", notes:"Additional notes",
+    };
+
+    const SELECT_OPTS = {
+      nationality: ["🇸🇬 Singaporean","🇲🇾 Malaysian","🇨🇳 Chinese","🇧🇩 Bangladeshi","🇮🇳 Indian","🇱🇰 Sri Lankan","🇹🇭 Thai","🇲🇲 Myanmarese","🇵🇭 Filipino","🇮🇩 Indonesian","🇺🇸 American","🇬🇧 British","🇦🇺 Australian","🌍 Other"],
+      country:     ["🇲🇾 Malaysia","🇨🇳 China","🇧🇩 Bangladesh","🇮🇳 India","🇱🇰 Sri Lanka","🇹🇭 Thailand","🇲🇲 Myanmar","🇵🇭 Philippines","🇮🇩 Indonesia","🇸🇬 Singapore","🇺🇸 United States","🇬🇧 United Kingdom","🇦🇺 Australia","🌍 Other"],
+      workArrange: ["Full-time","Part-time","Shift work"],
+      availability:["Immediately","Within 1 week","Within 1 month"],
+      experience:  ["No experience","< 1 year","1–3 years","3–5 years","5–10 years","10+ years"],
+      education:   ["No formal education","Primary school","Secondary school","Vocational / ITE","Diploma","Degree or higher"],
+    };
+
+    const MULTI_OPTS = {
+      jobType:   ["Construction","Cleaning","Delivery / Logistics","Security","Warehouse","F&B / Kitchen","Manufacturing","Other"],
+      languages: ["English","Mandarin","Malay","Tamil","Hindi","Bengali"],
     };
 
     const data = s.data || {};
-    // All data keys in display order — skip top-level duplicates
+
+    function renderField(labelKey, attrName, attrValue, value) {
+      const label = esc(FIELD_LABELS[labelKey] || labelKey);
+      if (SELECT_OPTS[labelKey]) {
+        const opts = SELECT_OPTS[labelKey].map(o =>
+          `<option value="${esc(o)}"${value === o ? " selected" : ""}>${esc(o)}</option>`
+        ).join("");
+        return `<div class="drawer-edit-field"><label>${label}</label>
+          <select ${attrName}="${esc(attrValue)}"><option value="">— Select —</option>${opts}</select>
+        </div>`;
+      }
+      if (MULTI_OPTS[labelKey]) {
+        const selected = String(value || "").split(",").map(v => v.trim()).filter(Boolean);
+        const multiAttr = attrName === "data-edit" ? "data-multi" : "data-multi-data";
+        const checks = MULTI_OPTS[labelKey].map(o =>
+          `<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;cursor:pointer;">
+            <input type="checkbox" ${multiAttr}="${esc(attrValue)}" value="${esc(o)}"${selected.includes(o) ? " checked" : ""} style="width:15px;height:15px;accent-color:var(--brand);flex-shrink:0;">
+            ${esc(o)}</label>`
+        ).join("");
+        return `<div class="drawer-edit-field"><label>${label}</label>
+          <div style="display:grid;gap:8px;padding:6px 0;">${checks}</div>
+        </div>`;
+      }
+      return `<div class="drawer-edit-field"><label>${label}</label>
+        <input type="text" ${attrName}="${esc(attrValue)}" value="${esc(String(value ?? ""))}">
+      </div>`;
+    }
+
     const DATA_KEYS = ["dob","country","city","phone","email","workArrange","availability",
       "salary","experience","job1Title","job1Company","job1Dates",
       "job2Title","job2Company","job2Dates","job3Title","job3Company","job3Dates",
-      "skills","certs","education","englishLevel","otherLangs",
-      "passportNum","passportExpiry","wpStatus","sgExperience","notes"];
+      "skills","certs","education","languages","notes"];
 
-    const fieldsHtml = `
-      <div class="drawer-edit-field">
-        <label>Full name</label>
-        <input type="text" data-edit="worker_name" value="${esc(s.worker_name || "")}">
-      </div>
-      <div class="drawer-edit-field">
-        <label>Nationality</label>
-        <input type="text" data-edit="nationality" value="${esc(s.nationality || "")}">
-      </div>
-      <div class="drawer-edit-field">
-        <label>Job type</label>
-        <input type="text" data-edit="job_type" value="${esc(s.job_type || "")}">
-      </div>
-      ${DATA_KEYS.map(k => `
-      <div class="drawer-edit-field">
-        <label>${esc(FIELD_LABELS[k] || k)}</label>
-        <input type="text" data-edit-data="${esc(k)}" value="${esc(String(data[k] ?? ""))}">
-      </div>`).join("")}
-    `;
+    const fieldsHtml =
+      renderField("name",       "data-edit",      "worker_name", s.worker_name || "") +
+      renderField("nationality","data-edit",       "nationality", s.nationality || "") +
+      renderField("jobType",    "data-edit",       "job_type",    s.job_type || "") +
+      DATA_KEYS.map(k => renderField(k, "data-edit-data", k, data[k] ?? "")).join("");
 
     body.innerHTML = `
       <div class="drawer-section">
@@ -1036,17 +1060,33 @@ a { color: inherit; text-decoration: none; }
       const msgEl = document.getElementById("editSubMsg");
       btn.disabled = true; btn.textContent = "Saving…";
 
-      // Collect top-level updates
+      // Collect top-level text/select updates
       const updates = {};
       body.querySelectorAll("[data-edit]").forEach(el => {
         updates[el.dataset.edit] = el.value.trim();
       });
+      // Collect top-level multi-checkbox updates
+      const multiTopKeys = new Set(Array.from(body.querySelectorAll("[data-multi]")).map(el => el.dataset.multi));
+      multiTopKeys.forEach(k => {
+        updates[k] = Array.from(body.querySelectorAll(`[data-multi="${k}"]:checked`)).map(el => el.value).join(", ");
+      });
 
-      // Collect data field updates
+      // Collect data field text/select updates
       const newData = { ...data };
       body.querySelectorAll("[data-edit-data]").forEach(el => {
         newData[el.dataset.editData] = el.value.trim();
       });
+      // Collect data field multi-checkbox updates
+      const multiDataKeys = new Set(Array.from(body.querySelectorAll("[data-multi-data]")).map(el => el.dataset.multiData));
+      multiDataKeys.forEach(k => {
+        newData[k] = Array.from(body.querySelectorAll(`[data-multi-data="${k}"]:checked`)).map(el => el.value).join(", ");
+      });
+
+      // Keep data blob in sync with top-level columns
+      if (updates.worker_name !== undefined) newData.name = updates.worker_name;
+      if (updates.nationality !== undefined) newData.nationality = updates.nationality;
+      if (updates.job_type !== undefined) newData.jobType = updates.job_type;
+
       updates.data = newData;
 
       const res = await fetch(`/api/submissions/${encodeURIComponent(s.id)}`, {
