@@ -320,7 +320,7 @@ app.get("/api/pdf/download", async (req, res) => {
   if (isAdmin) {
     const { data } = await supabase
       .from("submissions")
-      .select("data, attachment_count")
+      .select("data, attachment_count, pdf_path")
       .eq("id", submissionId)
       .maybeSingle();
     sub = data;
@@ -333,7 +333,7 @@ app.get("/api/pdf/download", async (req, res) => {
     if (!agency) return res.status(403).send("Forbidden");
     const { data } = await supabase
       .from("submissions")
-      .select("data, attachment_count")
+      .select("data, attachment_count, pdf_path")
       .eq("id", submissionId)
       .eq("agency_id", agency.id)
       .maybeSingle();
@@ -348,9 +348,16 @@ app.get("/api/pdf/download", async (req, res) => {
 
   // Fetch and merge attachments (PDF/JPG/PNG) from Supabase storage
   try {
-    const agencyFolder = (sub.data.agency || "unknown_agency").trim()
-      .replace(/[\/\\?%*:|"<>]/g, "-").replace(/\s+/g, " ").replace(/\.+$/g, "") || "unknown_agency";
-    const attDir = `resume_output/${agencyFolder}/${submissionId}/attachments`;
+    // Derive the attachment folder from the stored pdf_path (e.g. "resume_output/mba/web-abc-123/resume.pdf")
+    // so it matches the exact folder used at upload time, not a reconstructed guess.
+    const pdfPath = sub.pdf_path || "";
+    const attDir = pdfPath
+      ? pdfPath.replace(/\/resume\.pdf$/, "/attachments")
+      : (() => {
+          const agencyFolder = (sub.data.agency || "unknown_agency").trim()
+            .replace(/[\/\\?%*:|"<>]/g, "-").replace(/\s+/g, " ").replace(/\.+$/g, "") || "unknown_agency";
+          return `resume_output/${agencyFolder}/${submissionId}/attachments`;
+        })();
     console.log(`[pdf-download] listing attachments at: ${attDir}`);
     const { data: fileList, error: listErr } = await supabase.storage.from("Resumes").list(attDir);
     if (listErr) {

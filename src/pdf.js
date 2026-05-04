@@ -297,116 +297,171 @@ function buildPDF(d) {
   d = clean;
 
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const L = 50, R = 545, W = R - L;
+    const doc = new PDFDocument({ size: "A4", margins: { top: 48, bottom: 48, left: L, right: 50 } });
     const chunks = [];
     doc.on("data", chunk => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    const skip = v => !v || v === "NA";
-    const location = [d.city, d.country].filter(Boolean).join(", ");
+    const skip = v => !v || String(v).trim() === "" || v === "NA";
+    const location = [d.city, d.country].filter(v => !skip(v)).join(", ");
     const today = new Date().toLocaleDateString("en-SG", { year: "numeric", month: "long", day: "numeric" });
 
-    // Header
-    doc.fontSize(18).font("Helvetica-Bold").text((d.name ?? "").toUpperCase(), { align: "center" });
-    doc.moveDown(0.2);
-    doc.fontSize(10).font("Helvetica").fillColor("#444444")
-       .text([d.phone, d.email, location, d.nationality].filter(Boolean).join("  |  "), { align: "center" });
-    doc.moveDown(0.1);
-    doc.fontSize(9).fillColor("#888888").text(`Submitted to: ${d.agency ?? ""}`, { align: "center" });
-    if (d.partnerAgency || d.partnerCountry) {
-      const routedBy = [d.partnerAgency, d.partnerCountry].filter(Boolean).join(" • ");
-      doc.moveDown(0.1);
-      doc.fontSize(9).fillColor("#888888").text(`Partner link: ${routedBy}`, { align: "center" });
-    }
-    doc.moveDown(0.3);
-    doc.moveTo(50, doc.y).lineTo(545, doc.y).lineWidth(2).strokeColor("#111111").stroke();
-    doc.moveDown(0.5);
+    // ── Header ────────────────────────────────────────────────────
+    doc.fontSize(22).font("Helvetica-Bold").fillColor("#111111")
+       .text((d.name ?? "").toUpperCase(), { align: "center" });
+    doc.moveDown(0.25);
 
-    function sectionTitle(title) {
-      doc.moveDown(0.3);
-      doc.fontSize(9).font("Helvetica-Bold").fillColor("#111111").text(title.toUpperCase(), { characterSpacing: 1.5 });
-      doc.moveTo(50, doc.y).lineTo(545, doc.y).lineWidth(0.5).strokeColor("#111111").stroke();
-      doc.moveDown(0.4);
+    const contactParts = [d.phone, d.email, location].filter(v => !skip(v));
+    if (contactParts.length) {
+      doc.fontSize(9.5).font("Helvetica").fillColor("#444444")
+         .text(contactParts.join("   |   "), { align: "center" });
+    }
+    if (!skip(d.nationality)) {
+      doc.fontSize(9).fillColor("#666666")
+         .text(d.nationality, { align: "center" });
     }
 
+    // Routing note (small, below contact)
+    const routingParts = [];
+    if (!skip(d.agency)) routingParts.push(`Submitted to: ${d.agency}`);
+    if (!skip(d.partnerAgency)) {
+      const via = [d.partnerAgency, d.partnerCountry].filter(v => !skip(v)).join(", ");
+      routingParts.push(`Via: ${via}`);
+    }
+    if (routingParts.length) {
+      doc.moveDown(0.15);
+      doc.fontSize(8).fillColor("#999999").text(routingParts.join("   |   "), { align: "center" });
+    }
+
+    doc.moveDown(0.4);
+    doc.moveTo(L, doc.y).lineTo(R, doc.y).lineWidth(1.5).strokeColor("#111111").stroke();
+    doc.moveDown(0.55);
+
+    // ── Section title ─────────────────────────────────────────────
+    function section(title) {
+      if (doc.y > 700) doc.addPage();
+      else doc.moveDown(0.5);
+      doc.fontSize(8.5).font("Helvetica-Bold").fillColor("#111111")
+         .text(title.toUpperCase(), L, doc.y, { align: "left", characterSpacing: 1.2, width: W });
+      doc.moveDown(0.05);
+      doc.moveTo(L, doc.y).lineTo(R, doc.y).lineWidth(0.5).strokeColor("#bbbbbb").stroke();
+      doc.moveDown(0.35);
+    }
+
+    // ── Two-column label: value row ───────────────────────────────
     function infoRow(label, value) {
       if (skip(value)) return;
-      doc.fontSize(10).font("Helvetica-Bold").fillColor("#333333").text(label + ": ", { continued: true });
-      doc.font("Helvetica").fillColor("#111111").text(value);
+      const y = doc.y;
+      doc.fontSize(9.5).font("Helvetica-Bold").fillColor("#555555")
+         .text(label, L, y, { width: 155, lineBreak: false });
+      doc.fontSize(9.5).font("Helvetica").fillColor("#111111")
+         .text(value, L + 160, y, { width: W - 160 });
+      doc.moveDown(0.15);
     }
 
-    function pills(str) {
+    // ── Inline comma list ─────────────────────────────────────────
+    function inlineList(str) {
       if (skip(str)) return;
       const items = str.split(/[,،]+/).map(s => s.trim()).filter(Boolean);
       if (!items.length) return;
-      doc.fontSize(10).font("Helvetica").fillColor("#111111");
-      const x0 = 50; let x = x0, y = doc.y;
-      items.forEach(item => {
-        const w = doc.widthOfString(item) + 14;
-        if (x + w > 545) { x = x0; y += 18; }
-        doc.rect(x, y, w, 15).lineWidth(0.5).strokeColor("#999999").stroke();
-        doc.text(item, x + 7, y + 3, { lineBreak: false });
-        x += w + 6;
-      });
-      doc.y = y + 20;
-      doc.moveDown(0.2);
+      doc.fontSize(9.5).font("Helvetica").fillColor("#111111")
+         .text(items.join(", "), { width: W });
     }
 
+    // ── Job entry ─────────────────────────────────────────────────
     function jobBlock(n) {
-      const t = d[`job${n}Title`], c = d[`job${n}Company`], dt = d[`job${n}Dates`];
-      if (skip(t)) return;
-      doc.fontSize(10).font("Helvetica-Bold").fillColor("#111111").text(t, { continued: !skip(dt) });
-      if (!skip(dt)) { doc.font("Helvetica").fillColor("#555555").text("  " + dt, { align: "right" }); }
-      else { doc.text(""); }
-      if (!skip(c)) doc.fontSize(10).font("Helvetica-Oblique").fillColor("#555555").text(c);
+      const title = d[`job${n}Title`];
+      const company = d[`job${n}Company`];
+      const dates = d[`job${n}Dates`];
+      if (skip(title)) return;
+
+      const y = doc.y;
+      // Title left, dates right on same baseline
+      doc.fontSize(10).font("Helvetica-Bold").fillColor("#111111")
+         .text(title, L, y, { width: W - 140, lineBreak: false });
+      if (!skip(dates)) {
+        doc.fontSize(9.5).font("Helvetica").fillColor("#666666")
+           .text(dates, L, y, { width: W, align: "right", lineBreak: false });
+      }
       doc.moveDown(0.3);
+      if (!skip(company)) {
+        doc.fontSize(9.5).font("Helvetica-Oblique").fillColor("#555555")
+           .text(company, { width: W });
+        doc.moveDown(0.2);
+      }
+      doc.moveDown(0.25);
     }
 
-    sectionTitle("Personal Details");
-    infoRow("Date of birth", d.dob);
+    // ── Personal Details ──────────────────────────────────────────
+    section("Personal Details");
+    infoRow("Date of Birth", d.dob);
     infoRow("Nationality", d.nationality);
-    infoRow("Current location", location);
-    infoRow("Work arrangement", d.workArrange);
+    if (!skip(location)) infoRow("Current Location", location);
     infoRow("Availability", d.availability);
-    if (!skip(d.salary)) infoRow("Expected salary (SGD)", d.salary);
+    infoRow("Work Arrangement", d.workArrange);
+    if (!skip(d.salary)) infoRow("Expected Salary (SGD)", d.salary);
 
-    sectionTitle("Objective");
-    doc.fontSize(10).font("Helvetica").fillColor("#111111")
-       .text(`Seeking a ${d.jobType ?? ""} position in Singapore. ${d.experience ?? ""} of relevant work experience. Available to start ${d.availability ?? "immediately"}.`);
+    // ── Job Preferences ───────────────────────────────────────────
+    const jobPrefs = [];
+    if (!skip(d.jobType)) jobPrefs.push(`Job type: ${d.jobType}`);
+    if (!skip(d.experience)) jobPrefs.push(`Experience: ${d.experience}`);
+    if (jobPrefs.length) {
+      section("Job Objective");
+      jobPrefs.forEach(p => {
+        doc.fontSize(9.5).font("Helvetica").fillColor("#111111").text(p, { width: W });
+        doc.moveDown(0.15);
+      });
+    }
 
-    sectionTitle("Work Experience");
-    let hasJobHistory = false;
+    // ── Work Experience ───────────────────────────────────────────
+    section("Work Experience");
+    let hasJobs = false;
     for (let n = 1; n <= 50; n++) {
       if (skip(d[`job${n}Title`])) break;
       jobBlock(n);
-      hasJobHistory = true;
+      hasJobs = true;
     }
-    if (!hasJobHistory) doc.fontSize(10).font("Helvetica-Oblique").fillColor("#888888").text("No work history provided.");
+    if (!hasJobs) {
+      doc.fontSize(9.5).font("Helvetica-Oblique").fillColor("#888888").text("No work history provided.", { width: W });
+    }
 
-    sectionTitle("Skills");
-    if (!skip(d.skills)) pills(d.skills);
-    else doc.fontSize(10).font("Helvetica-Oblique").fillColor("#888888").text("Not provided.");
+    // ── Skills ────────────────────────────────────────────────────
+    if (!skip(d.skills)) {
+      section("Skills");
+      inlineList(d.skills);
+    }
 
+    // ── Certifications ────────────────────────────────────────────
     const certsText = Array.isArray(d.certsList) && d.certsList.length
       ? d.certsList.map(c => c.name).join(", ")
       : (d.certs || "");
-    if (!skip(certsText)) { sectionTitle("Certifications & Licences"); pills(certsText); }
+    if (!skip(certsText)) {
+      section("Certifications & Licences");
+      inlineList(certsText);
+    }
 
-    sectionTitle("Education");
-    doc.fontSize(10).font("Helvetica").fillColor("#111111").text(d.education ?? "—");
+    // ── Education ─────────────────────────────────────────────────
+    if (!skip(d.education)) {
+      section("Education");
+      doc.fontSize(9.5).font("Helvetica").fillColor("#111111").text(d.education, { width: W });
+    }
 
-    sectionTitle("Languages");
-    if (!skip(d.languages)) pills(d.languages);
-    else doc.fontSize(10).font("Helvetica-Oblique").fillColor("#888888").text("Not provided.");
+    // ── Languages ─────────────────────────────────────────────────
+    if (!skip(d.languages)) {
+      section("Languages");
+      inlineList(d.languages);
+    }
 
-    doc.moveDown(1);
-    doc.moveTo(50, doc.y).lineTo(545, doc.y).lineWidth(0.5).strokeColor("#dddddd").stroke();
-    doc.moveDown(0.3);
+    // ── Footer ────────────────────────────────────────────────────
+    doc.moveDown(1.2);
+    doc.moveTo(L, doc.y).lineTo(R, doc.y).lineWidth(0.4).strokeColor("#cccccc").stroke();
+    doc.moveDown(0.35);
     const footerParts = ["Generated by JobReady", today, `For: ${d.agency ?? ""}`];
-    if (d.partnerAgency) footerParts.push(`Via: ${d.partnerAgency}`);
-    doc.fontSize(8).font("Helvetica").fillColor("#aaaaaa")
-       .text(footerParts.join("  •  "), { align: "center" });
+    if (!skip(d.partnerAgency)) footerParts.push(`Via: ${d.partnerAgency}`);
+    doc.fontSize(7.5).font("Helvetica").fillColor("#aaaaaa")
+       .text(footerParts.join("  •  "), { align: "center", width: W });
 
     doc.end();
   });
