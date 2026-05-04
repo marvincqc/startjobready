@@ -359,6 +359,15 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-add-att:hover { background: rgba(200,94,56,0.06); border-color: var(--brand); }
 .btn-add-att:disabled { opacity: 0.5; cursor: not-allowed; }
+.att-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.att-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg-alt); border-radius: 10px; font-size: 12px; }
+.att-row-icon { flex-shrink: 0; color: var(--muted); }
+.att-row-name { flex: 1; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-row-meta { color: var(--muted); flex-shrink: 0; }
+.att-row-view { flex-shrink: 0; color: var(--brand); font-weight: 700; text-decoration: none; font-size: 11px; }
+.att-row-view:hover { text-decoration: underline; }
+.att-row-del { flex-shrink: 0; background: none; border: none; cursor: pointer; color: #c53030; padding: 0 2px; line-height: 1; }
+.att-row-del:hover { color: #9b2c2c; }
 
 /* ── LOADING SPINNER ─────────────────────────────────────────── */
 .spinner { width: 20px; height: 20px; border: 2.5px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 32px auto; }
@@ -922,6 +931,7 @@ applyLang();
           ${fields.map(f => `<div class="drawer-field"><div class="drawer-field-key">${esc(f.k)}</div><div class="drawer-field-val">${esc(String(f.v ?? "—"))}</div></div>`).join("")}
           <div class="drawer-field"><div class="drawer-field-key">${esc(T("dash_attachments"))}</div><div class="drawer-field-val" id="drawerAttCount">${s.attachment_count || 0}</div></div>
         </div>
+        <div id="attListWrap"></div>
       </div>
       ${s.data ? `
       <div class="drawer-section">
@@ -1004,9 +1014,56 @@ applyLang();
         btn.disabled = false;
         btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Add attachment`;
         e.target.value = "";
+        loadAttachmentList(s);
       }
     });
+
+    if (s.attachment_count > 0) loadAttachmentList(s);
   }
+
+  async function loadAttachmentList(s) {
+    const wrap = document.getElementById("attListWrap");
+    if (!wrap) return;
+    wrap.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">Loading files…</div>`;
+    try {
+      const res = await fetch(`/api/submissions/${s.id}/attachments`, { headers: auth() });
+      const json = await res.json();
+      if (!json.ok || !json.attachments.length) { wrap.innerHTML = ""; return; }
+      wrap.innerHTML = `<div class="att-list">${json.attachments.map((att, i) => `
+        <div class="att-row" id="att-row-${i}">
+          <svg class="att-row-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 1h6l2 2v8H1V1h2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M3 6h8M3 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span class="att-row-name" title="${esc(att.originalName)}">${esc(att.originalName)}</span>
+          <span class="att-row-meta">${att.size ? Math.round(att.size/1024) + ' KB' : ''}</span>
+          ${att.viewUrl ? `<a class="att-row-view" href="${esc(att.viewUrl)}" target="_blank" rel="noopener">View</a>` : ''}
+          <button class="att-row-del" title="Delete" onclick="deleteAttachment('${s.id}',${att.index},this)">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M5 3V2h2v1M9 3l-.6 7H3.6L3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>`).join("")}</div>`;
+    } catch { wrap.innerHTML = ""; }
+  }
+
+  window.deleteAttachment = async function(subId, index, btn) {
+    if (!confirm("Delete this attachment? This cannot be undone.")) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/api/submissions/${subId}/attachments/${index}`, { method: "DELETE", headers: auth() });
+      const json = await res.json();
+      if (!json.ok) { alert(json.error || "Delete failed."); btn.disabled = false; return; }
+      // Refresh list and counts
+      const subRes = await fetch(`/api/submissions/${subId}`, { headers: auth() });
+      const subJson = await subRes.json();
+      const newCount = json.total;
+      const countEl = document.getElementById("drawerAttCount");
+      if (countEl) countEl.textContent = newCount;
+      const row = document.querySelector(`.sub-row[data-id="${subId}"]`);
+      if (row) {
+        const badge = row.querySelector(".sub-attach");
+        if (badge) { if (newCount > 0) badge.lastChild.textContent = newCount; else badge.remove(); }
+      }
+      if (subJson.ok) loadAttachmentList(subJson.submission);
+      else document.getElementById("attListWrap").innerHTML = "";
+    } catch { alert("Network error."); btn.disabled = false; }
+  };
 
   function renderDrawerEdit(s, pdfUrl, body) {
     const FIELD_LABELS = {

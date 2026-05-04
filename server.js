@@ -875,6 +875,87 @@ app.post("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
   }
 });
 
+// ─── Attachment helpers (shared by GET and DELETE) ───────────────────────────
+async function getSubmissionForAttachments(req) {
+  const isAdmin = req.user.email === SUPER_ADMIN;
+  if (isAdmin) {
+    const { data } = await supabase.from("submissions").select("pdf_path, attachment_count").eq("id", req.params.id).maybeSingle();
+    return { sub: data, isAdmin };
+  }
+  const { data: agency } = await supabase.from("agencies").select("id").eq("auth_id", req.user.id).maybeSingle();
+  if (!agency) return { sub: null, isAdmin, agency: null };
+  const { data } = await supabase.from("submissions").select("pdf_path, attachment_count").eq("id", req.params.id).eq("agency_id", agency.id).maybeSingle();
+  return { sub: data, isAdmin, agency };
+}
+
+async function getManifest(pdfPath) {
+  const manifestPath = pdfPath.replace(/\/resume\.pdf$/, "/submission.json");
+  const { data: blob } = await supabase.storage.from("Resumes").download(manifestPath);
+  if (!blob) return { manifest: { attachments: [] }, manifestPath };
+  try {
+    const manifest = JSON.parse(await blob.text());
+    if (!Array.isArray(manifest.attachments)) manifest.attachments = [];
+    return { manifest, manifestPath };
+  } catch {
+    return { manifest: { attachments: [] }, manifestPath };
+  }
+}
+
+// ─── List attachments ─────────────────────────────────────────────────────────
+app.get("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
+  const { sub, isAdmin, agency } = await getSubmissionForAttachments(req);
+  if (!sub && !isAdmin) return res.status(403).json({ ok: false, error: "Forbidden" });
+  if (!sub) return res.status(404).json({ ok: false, error: "Submission not found" });
+  if (!sub.pdf_path) return res.json({ ok: true, attachments: [] });
+
+  const { manifest } = await getManifest(sub.pdf_path);
+
+  // Generate short-lived signed view URLs
+  const attachments = await Promise.all(
+    manifest.attachments.map(async (att, i) => {
+      const { data: signed } = await supabase.storage.from("Resumes").createSignedUrl(att.storagePath, 3600);
+      return { ...att, index: i, viewUrl: signed?.signedUrl || null };
+    })
+  );
+
+  res.json({ ok: true, attachments });
+});
+
+// ─── Delete one attachment ────────────────────────────────────────────────────
+app.delete("/api/submissions/:id/attachments/:index", requireAuth, async (req, res) => {
+  const { sub, isAdmin, agency } = await getSubmissionForAttachments(req);
+  if (!sub && !isAdmin) return res.status(403).json({ ok: false, error: "Forbidden" });
+  if (!sub) return res.status(404).json({ ok: false, error: "Submission not found" });
+  if (!sub.pdf_path) return res.status(404).json({ ok: false, error: "No attachments found" });
+
+  const idx = parseInt(req.params.index, 10);
+  const { manifest, manifestPath } = await getManifest(sub.pdf_path);
+  if (isNaN(idx) || idx < 0 || idx >= manifest.attachments.length) {
+    return res.status(404).json({ ok: false, error: "Attachment not found" });
+  }
+
+  const att = manifest.attachments[idx];
+
+  // Delete file from storage
+  await supabase.storage.from("Resumes").remove([att.storagePath]);
+
+  // Remove from manifest and re-upload
+  manifest.attachments.splice(idx, 1);
+  await supabase.storage.from("Resumes").upload(
+    manifestPath,
+    Buffer.from(JSON.stringify(manifest, null, 2), "utf8"),
+    { contentType: "application/json", upsert: true }
+  );
+
+  // Update DB count
+  const q = supabase.from("submissions").update({ attachment_count: manifest.attachments.length }).eq("id", req.params.id);
+  if (!isAdmin) q.eq("agency_id", agency.id);
+  await q;
+
+  console.log(`[att-delete] ${att.storagePath} (submission ${req.params.id})`);
+  res.json({ ok: true, total: manifest.attachments.length });
+});
+
 // Passport OCR was moved to the browser. Keep this route non-fatal for stale clients.
 app.all("/ocr-passport", (_req, res) => {
   res.status(410).json({
