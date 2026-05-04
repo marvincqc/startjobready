@@ -300,7 +300,7 @@ function stripEmoji(str) {
     .trim();
 }
 
-function buildPDF(d) {
+async function buildPDF(d) {
   // Sanitize all string fields — Helvetica cannot render emoji or flag characters
   const clean = {};
   for (const [k, v] of Object.entries(d)) {
@@ -308,9 +308,29 @@ function buildPDF(d) {
   }
   d = clean;
 
+  // Pre-process photo to a JPEG buffer sized for top-right placement
+  let photoBuffer = null;
+  if (d.photo && typeof d.photo === "string") {
+    try {
+      const { buffer: rawBuf } = parseAttachmentDataUrl(d.photo);
+      photoBuffer = await sharp(rawBuf)
+        .rotate()
+        .resize(200, 250, { fit: "cover", position: "centre" })
+        .jpeg({ quality: 88 })
+        .toBuffer();
+    } catch (err) {
+      console.warn("[pdf] photo conversion failed:", err.message);
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const L = 50, R = 545, W = R - L;
-    const doc = new PDFDocument({ size: "A4", margins: { top: 48, bottom: 48, left: L, right: 50 } });
+    const PHOTO_W = 90, PHOTO_H = 113, PHOTO_GAP = 14;
+    const TOP = 48;
+    const textW = photoBuffer ? W - PHOTO_W - PHOTO_GAP : W;
+    const textAlign = photoBuffer ? "left" : "center";
+
+    const doc = new PDFDocument({ size: "A4", margins: { top: TOP, bottom: 48, left: L, right: 50 } });
     const chunks = [];
     doc.on("data", chunk => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -321,18 +341,23 @@ function buildPDF(d) {
     const today = new Date().toLocaleDateString("en-SG", { year: "numeric", month: "long", day: "numeric" });
 
     // ── Header ────────────────────────────────────────────────────
-    doc.fontSize(22).font("Helvetica-Bold").fillColor("#111111")
-       .text((d.name ?? "").toUpperCase(), { align: "center" });
-    doc.moveDown(0.25);
+    if (photoBuffer) {
+      doc.image(photoBuffer, R - PHOTO_W, TOP, { width: PHOTO_W, height: PHOTO_H });
+    }
+
+    // Name
+    doc.fontSize(20).font("Helvetica-Bold").fillColor("#111111")
+       .text((d.name ?? "").toUpperCase(), L, TOP, { width: textW, align: textAlign });
+    doc.moveDown(0.2);
 
     const contactParts = [d.phone, d.email, location].filter(v => !skip(v));
     if (contactParts.length) {
       doc.fontSize(9.5).font("Helvetica").fillColor("#444444")
-         .text(contactParts.join("   |   "), { align: "center" });
+         .text(contactParts.join("   |   "), { width: textW, align: textAlign });
     }
     if (!skip(d.nationality)) {
       doc.fontSize(9).fillColor("#666666")
-         .text(d.nationality, { align: "center" });
+         .text(d.nationality, { width: textW, align: textAlign });
     }
 
     // Routing note (small, below contact)
@@ -344,12 +369,13 @@ function buildPDF(d) {
     }
     if (routingParts.length) {
       doc.moveDown(0.15);
-      doc.fontSize(8).fillColor("#999999").text(routingParts.join("   |   "), { align: "center" });
+      doc.fontSize(8).fillColor("#999999").text(routingParts.join("   |   "), { width: textW, align: textAlign });
     }
 
-    doc.moveDown(0.4);
-    doc.moveTo(L, doc.y).lineTo(R, doc.y).lineWidth(1.5).strokeColor("#111111").stroke();
-    doc.moveDown(0.55);
+    // Ensure cursor clears the photo before drawing the divider
+    const dividerY = photoBuffer ? Math.max(doc.y + 6, TOP + PHOTO_H + 10) : doc.y + 10;
+    doc.moveTo(L, dividerY).lineTo(R, dividerY).lineWidth(1.5).strokeColor("#111111").stroke();
+    doc.y = dividerY + 10;
 
     // ── Section title ─────────────────────────────────────────────
     function section(title) {

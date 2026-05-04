@@ -551,6 +551,18 @@ select.field {
   display: none;
 }
 .field-error.show { display: block; }
+.photo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 8px 0; }
+.photo-preview-box {
+  width: 120px; height: 150px; border-radius: 12px;
+  border: 2px dashed var(--border); background: #f9f6f1;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
+}
+.photo-preview-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
+.photo-preview-placeholder { font-size: 36px; line-height: 1; }
+.photo-preview-box.has-photo { border-style: solid; border-color: var(--accent); }
+.photo-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 260px; }
+
 .upload-zone {
   border: 1.5px dashed var(--border);
   border-radius: 28px;
@@ -1089,6 +1101,7 @@ const TR = {
       { k:"city",        ic:"🏙", label:"City",         q:"Which city or town are you in?",                                hint:"",                                                                          type:"text",  ph:"e.g. Kuala Lumpur" },
       { k:"phone",       ic:"📞", label:"Phone",        q:"What is your phone number?",                                    hint:"Include your country code. Example: +60 12-345 6789",                       type:"text",  ph:"e.g. +60 12-345 6789", validate:"phone" },
       { k:"email",       ic:"📧", label:"Email",        q:"What is your email address?",                                   hint:"Example: ahmad@gmail.com",                                                  type:"text",  ph:"e.g. ahmad@gmail.com", validate:"email" },
+      { k:"photo",       ic:"📷", label:"Photo",        q:"Upload a recent photo of yourself.",                             hint:"A clear, front-facing passport-style photo works best.",                    type:"photo" },
       { k:"jobType",     ic:"💼", label:"Job type",     q:"What type of work are you looking for in Singapore?",           hint:"Select all that apply.",                                                     type:"multi", opts:["Construction","Cleaning","Delivery / Logistics","Security","Warehouse","F&B / Kitchen","Manufacturing","Other"] },
       { k:"workArrange", ic:"🕐", label:"Arrangement",  q:"What type of work arrangement are you open to?",               hint:"",                                                                          type:"opts",  opts:["Full-time","Part-time","Shift work"] },
       { k:"availability",ic:"📅", label:"Availability", q:"When can you start work in Singapore?",                        hint:"",                                                                          type:"opts",  opts:["Immediately","Within 1 week","Within 1 month"] },
@@ -1978,6 +1991,13 @@ function render() {
     `;
   }
 
+  if (s.type === "photo") {
+    card.innerHTML = buildPhotoHtml(s);
+    wizard.appendChild(card);
+    document.getElementById("photoFileInput").addEventListener("change", handlePhotoSelect);
+    return;
+  }
+
   if (s.type === "scan") {
     card.innerHTML = scanPhase === "upload" ? buildScanUploadHtml() : buildScanReviewHtml();
     wizard.appendChild(card);
@@ -2142,7 +2162,7 @@ function renderReview() {
   const rs = TR[lang]?.reviewSections ?? TR.en.reviewSections;
   const sections = [
     { title: rs.routing,    keys: ["agency","partnerAgency","partnerCountry","partnerLinkCode","partnerLinkLabel"], editable: key => key === "agency" },
-    { title: rs.personal,   keys: ["name","dob","nationality","country","city","phone","email"] },
+    { title: rs.personal,   keys: ["name","dob","nationality","country","city","phone","email","photo"] },
     { title: rs.job,        keys: ["jobType","workArrange","availability","salary","experience"] },
     { title: rs.experience, keys: (() => { const ks = []; for (let n = 1; n <= 50; n++) { if (n > 1 && !data[`job${n-1}Title`]) break; ks.push(`job${n}Title`,`job${n}Company`,`job${n}Dates`); } return ks; })() },
     { title: rs.skills,     keys: ["skills","education","languages"] },
@@ -2157,6 +2177,16 @@ function renderReview() {
   sections.forEach(sec => {
     const rows = sec.keys.map(k => {
       const v = data[k];
+      // Photo gets its own preview row
+      if (k === "photo") {
+        const meta = getFieldMeta(k);
+        return `<div class="review-row" onclick="editField('photo')" style="align-items:center;">
+          <span class="review-ic">📷</span>
+          <span class="review-lb">${meta?.label || "Photo"}</span>
+          <span class="review-val">${v ? `<img src="${v}" style="width:40px;height:50px;object-fit:cover;border-radius:4px;vertical-align:middle;">` : "—"}</span>
+          <span class="review-edit">Edit</span>
+        </div>`;
+      }
       const meta = getFieldMeta(k);
       const isOptionalStep = Boolean(steps.find(x => x.k === k)?.optional);
       if (!v && isOptionalStep) return "";
@@ -2791,6 +2821,70 @@ function removeCert(index) {
   data.certsList.splice(index, 1);
   persistDraft();
   render();
+}
+
+// ── Photo step ────────────────────────────────────────────────────────────────
+function buildPhotoHtml(s) {
+  const hasPhoto = !!data.photo;
+  const header = `
+    <div class="step-icon">${s.ic}</div>
+    <h2 class="step-q">${s.q}</h2>
+    <p class="step-hint">${s.hint}</p>`;
+  return `${header}
+    <div class="photo-wrap">
+      <div class="photo-preview-box${hasPhoto ? " has-photo" : ""}" id="photoPreviewBox">
+        ${hasPhoto
+          ? `<img id="photoPreviewImg" src="${data.photo}" alt="Your photo">`
+          : `<span class="photo-preview-placeholder">🧑</span>`}
+      </div>
+      <input type="file" id="photoFileInput" hidden accept="image/*" capture="environment">
+      <div class="photo-actions">
+        <button class="upload-zone-btn" type="button" onclick="document.getElementById('photoFileInput').click()">
+          ${hasPhoto ? "Change photo" : "Select photo"}
+        </button>
+      </div>
+      <p id="photoErr" style="font-size:13px;color:#c0392b;min-height:18px;"></p>
+    </div>
+    <div class="nav">
+      ${currentStep > 0 ? `<button class="btn-back" onclick="goBack()">${t("back")}</button>` : ""}
+      <button class="btn-next" id="photoNextBtn" ${hasPhoto ? "" : "disabled"} onclick="goNext()">${t("next")}</button>
+    </div>`;
+}
+
+async function handlePhotoSelect(e) {
+  const file = e.target.files?.[0];
+  e.target.value = "";
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    document.getElementById("photoErr").textContent = "Please select an image file.";
+    return;
+  }
+  document.getElementById("photoErr").textContent = "";
+
+  // Compress to max 300×375 JPEG via canvas
+  const bitmap = await createImageBitmap(file);
+  const MAX_W = 300, MAX_H = 375;
+  const scale = Math.min(1, MAX_W / bitmap.width, MAX_H / bitmap.height);
+  const w = Math.round(bitmap.width * scale);
+  const h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+  bitmap.close();
+
+  data.photo = canvas.toDataURL("image/jpeg", 0.82);
+  persistDraft();
+
+  // Update preview without full re-render
+  const box = document.getElementById("photoPreviewBox");
+  if (box) {
+    box.classList.add("has-photo");
+    box.innerHTML = `<img id="photoPreviewImg" src="${data.photo}" alt="Your photo">`;
+  }
+  const btn = document.getElementById("photoNextBtn");
+  if (btn) { btn.disabled = false; btn.textContent = t("next"); }
+  const changeBtn = document.querySelector(".photo-actions .upload-zone-btn");
+  if (changeBtn) changeBtn.textContent = "Change photo";
 }
 
 function buildScanUploadHtml() {
