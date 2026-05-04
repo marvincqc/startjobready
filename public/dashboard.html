@@ -914,13 +914,13 @@ applyLang();
       { k: T("dash_nationality"), v: s.nationality },
       { k: T("dash_job_type"),    v: s.job_type },
       { k: T("dash_submitted"),   v: date },
-      { k: T("dash_attachments"), v: s.attachment_count || 0 },
     ];
     body.innerHTML = `
       <div class="drawer-section">
         <div class="drawer-label">${esc(T("dash_details"))}</div>
         <div class="drawer-fields">
           ${fields.map(f => `<div class="drawer-field"><div class="drawer-field-key">${esc(f.k)}</div><div class="drawer-field-val">${esc(String(f.v ?? "—"))}</div></div>`).join("")}
+          <div class="drawer-field"><div class="drawer-field-key">${esc(T("dash_attachments"))}</div><div class="drawer-field-val" id="drawerAttCount">${s.attachment_count || 0}</div></div>
         </div>
       </div>
       ${s.data ? `
@@ -973,13 +973,23 @@ applyLang();
           msgEl.style.color = "var(--brand)";
           msgEl.textContent = `${json.added} file${json.added > 1 ? "s" : ""} added (${json.total} total)`;
           s.attachment_count = json.total;
-          // Update the count shown in the details row
-          const countEl = document.querySelector(".drawer-field-val:last-of-type");
-          document.querySelectorAll(".drawer-field").forEach(el => {
-            if (el.querySelector(".drawer-field-key")?.textContent === T("dash_attachments")) {
-              el.querySelector(".drawer-field-val").textContent = json.total;
+          // Update drawer detail count
+          const countEl = document.getElementById("drawerAttCount");
+          if (countEl) countEl.textContent = json.total;
+          // Update list row badge
+          const row = document.querySelector(`.sub-row[data-id="${s.id}"]`);
+          if (row) {
+            let badge = row.querySelector(".sub-attach");
+            if (badge) {
+              badge.lastChild.textContent = json.total;
+            } else {
+              const dateEl = row.querySelector(".sub-date");
+              badge = document.createElement("div");
+              badge.className = "sub-attach";
+              badge.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 1h6l2 2v8H1V1h2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3 6h6M3 8h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>${json.total}`;
+              row.insertBefore(badge, dateEl);
             }
-          });
+          }
         } else {
           msgEl.style.color = "#c53030";
           msgEl.textContent = json.error || "Upload failed.";

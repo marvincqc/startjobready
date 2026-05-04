@@ -113,10 +113,13 @@ tr:hover td { background: #fafaf9; }
 .drawer-field-key { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
 .drawer-field-val { font-size: 13px; font-weight: 700; }
 .drawer-data { font-size: 12px; background: var(--bg); border-radius: 10px; padding: 12px; overflow-x: auto; white-space: pre-wrap; line-height: 1.6; color: #32414f; max-height: 260px; overflow-y: auto; }
-.btn-download { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--ink); color: #fff; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.btn-download { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 48px; background: var(--ink); color: #fff; border-radius: 999px; font-family: inherit; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; transition: background 0.15s; }
 .btn-download:hover { background: #1c3447; }
 .btn-edit-sub { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; border-radius: 999px; background: transparent; color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line); cursor: pointer; margin-top: 8px; transition: border-color 0.15s; }
 .btn-edit-sub:hover { border-color: var(--ink); }
+.btn-add-att { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; border-radius: 999px; background: transparent; color: #c85e38; font-family: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid rgba(200,94,56,0.3); cursor: pointer; margin-top: 8px; transition: background 0.15s, border-color 0.15s; }
+.btn-add-att:hover { background: rgba(200,94,56,0.06); border-color: #c85e38; }
+.btn-add-att:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-save-sub { display: flex; align-items: center; justify-content: center; width: 100%; height: 44px; border-radius: 999px; background: var(--brand); color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
 .btn-save-sub:hover { background: #a34526; }
 .btn-save-sub:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -438,9 +441,7 @@ tr:hover td { background: #fafaf9; }
 
     const s = json.submission;
     document.getElementById("drawerName").textContent = s.worker_name || "Unknown";
-    const pdfUrl = s.pdf_path
-      ? `/api/pdf/download?id=${encodeURIComponent(s.id)}&token=${encodeURIComponent(token)}`
-      : null;
+    const pdfUrl = s.pdf_path ? `/api/pdf/download?id=${encodeURIComponent(s.id)}` : null;
     renderDrawerView(s, pdfUrl, body);
   }
 
@@ -452,7 +453,6 @@ tr:hover td { background: #fafaf9; }
       { k: "Nationality", v: s.nationality },
       { k: "Job type",    v: s.job_type },
       { k: "Submitted",   v: date },
-      { k: "Attachments", v: s.attachment_count || 0 },
     ];
     const dataFields = s.data ? Object.entries(s.data)
       .filter(([, v]) => v !== null && v !== undefined && v !== "")
@@ -464,6 +464,7 @@ tr:hover td { background: #fafaf9; }
         <div class="drawer-label">Summary</div>
         <div class="drawer-fields">
           ${fields.map(f => `<div class="drawer-field"><div class="drawer-field-key">${esc(f.k)}</div><div class="drawer-field-val">${esc(String(f.v ?? "—"))}</div></div>`).join("")}
+          <div class="drawer-field"><div class="drawer-field-key">Attachments</div><div class="drawer-field-val" id="drawerAttCount">${s.attachment_count || 0}</div></div>
         </div>
       </div>
       ${dataFields ? `
@@ -473,11 +474,19 @@ tr:hover td { background: #fafaf9; }
       </div>` : ""}
       ${pdfUrl ? `
       <div class="drawer-section">
-        <a class="btn-download" href="${esc(pdfUrl)}" target="_blank" rel="noopener">
+        <button class="btn-download" onclick="adminDownloadPDF('${s.id}', this)">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Download resume PDF
-        </a>
+        </button>
       </div>` : ""}
+      <div class="drawer-section">
+        <input type="file" id="adminAttFileInput" hidden multiple accept=".pdf,.jpg,.jpeg,.png">
+        <button class="btn-add-att" id="adminAddAttBtn" onclick="document.getElementById('adminAttFileInput').click()">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Add attachment
+        </button>
+        <div id="adminAttMsg" style="font-size:12px;margin-top:6px;"></div>
+      </div>
       <div class="drawer-section">
         <button class="btn-edit-sub" id="editSubBtn">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
@@ -486,7 +495,72 @@ tr:hover td { background: #fafaf9; }
       </div>
     `;
     document.getElementById("editSubBtn").addEventListener("click", () => renderDrawerEdit(s, pdfUrl, body));
+
+    document.getElementById("adminAttFileInput").addEventListener("change", async (e) => {
+      const files = e.target.files;
+      if (!files || !files.length) return;
+      const btn = document.getElementById("adminAddAttBtn");
+      const msgEl = document.getElementById("adminAttMsg");
+      btn.disabled = true;
+      btn.textContent = `Uploading ${files.length} file${files.length > 1 ? "s" : ""}…`;
+      msgEl.textContent = "";
+      try {
+        const fd = new FormData();
+        for (const f of files) fd.append("attachments", f, f.name);
+        const res = await fetch(`/api/submissions/${s.id}/attachments`, { method: "POST", headers: auth(), body: fd });
+        const json = await res.json();
+        if (json.ok) {
+          msgEl.style.color = "var(--brand, #c85e38)";
+          msgEl.textContent = `${json.added} file${json.added > 1 ? "s" : ""} added (${json.total} total)`;
+          s.attachment_count = json.total;
+          const countEl = document.getElementById("drawerAttCount");
+          if (countEl) countEl.textContent = json.total;
+          // Update list row count badge if visible
+          const row = document.getElementById("sub-row-" + s.id);
+          if (row) {
+            let badge = row.querySelector(".sub-attach");
+            if (badge) {
+              badge.lastChild.textContent = json.total;
+            } else {
+              badge = document.createElement("span");
+              badge.className = "sub-attach";
+              badge.textContent = json.total;
+              row.appendChild(badge);
+            }
+          }
+        } else {
+          msgEl.style.color = "#c53030";
+          msgEl.textContent = json.error || "Upload failed.";
+        }
+      } catch {
+        msgEl.style.color = "#c53030";
+        msgEl.textContent = "Network error.";
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Add attachment`;
+        e.target.value = "";
+      }
+    });
   }
+
+  window.adminDownloadPDF = async function(id, btn) {
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = "Preparing…";
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) throw new Error("Session expired — please sign in again.");
+      const url = `/api/pdf/download?id=${encodeURIComponent(id)}&token=${encodeURIComponent(session.access_token)}`;
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    } catch (e) {
+      alert(e.message || "Download failed.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  };
 
   function renderDrawerEdit(s, pdfUrl, body) {
     const FIELD_LABELS = {

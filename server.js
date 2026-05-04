@@ -768,16 +768,23 @@ app.delete("/api/submissions/:id", requireAuth, async (req, res) => {
 
 // ─── Add attachments to an existing submission ───────────────────────────────
 app.post("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
-  const { data: agency } = await supabase
-    .from("agencies").select("id").eq("auth_id", req.user.id).maybeSingle();
-  if (!agency) return res.status(403).json({ ok: false, error: "Forbidden" });
+  const isAdmin = req.user.email === SUPER_ADMIN;
 
-  const { data: sub } = await supabase
-    .from("submissions")
-    .select("pdf_path, attachment_count")
-    .eq("id", req.params.id)
-    .eq("agency_id", agency.id)
-    .maybeSingle();
+  let sub;
+  if (isAdmin) {
+    const { data } = await supabase
+      .from("submissions").select("pdf_path, attachment_count").eq("id", req.params.id).maybeSingle();
+    sub = data;
+  } else {
+    const { data: agency } = await supabase
+      .from("agencies").select("id").eq("auth_id", req.user.id).maybeSingle();
+    if (!agency) return res.status(403).json({ ok: false, error: "Forbidden" });
+    const { data } = await supabase
+      .from("submissions").select("pdf_path, attachment_count")
+      .eq("id", req.params.id).eq("agency_id", agency.id).maybeSingle();
+    sub = data;
+  }
+
   if (!sub) return res.status(404).json({ ok: false, error: "Submission not found" });
   if (!sub.pdf_path) return res.status(400).json({ ok: false, error: "Submission has no storage path." });
 
@@ -834,10 +841,11 @@ app.post("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
     );
 
     // Update attachment count in DB
-    await supabase.from("submissions")
+    const countUpdate = supabase.from("submissions")
       .update({ attachment_count: manifest.attachments.length })
-      .eq("id", req.params.id)
-      .eq("agency_id", agency.id);
+      .eq("id", req.params.id);
+    if (!isAdmin) countUpdate.eq("agency_id", agency.id);
+    await countUpdate;
 
     res.json({ ok: true, added: added.length, total: manifest.attachments.length });
   } finally {
