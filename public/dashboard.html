@@ -894,7 +894,7 @@ applyLang();
 
     const s = json.submission;
     document.getElementById("drawerName").textContent = s.worker_name || "Unknown";
-    const pdfUrl = s.pdf_path ? `/api/pdf/download?id=${encodeURIComponent(s.id)}&token=${encodeURIComponent(token)}` : null;
+    const pdfUrl = s.pdf_path ? `/api/pdf/download?id=${encodeURIComponent(s.id)}` : null;
     renderDrawerView(s, pdfUrl, body);
   }
 
@@ -920,10 +920,10 @@ applyLang();
       </div>` : ""}
       ${pdfUrl ? `
       <div class="drawer-section">
-        <a class="btn-download" href="${pdfUrl}" target="_blank" rel="noopener">
+        <button class="btn-download" onclick="downloadPDF('${s.id}', this)">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           ${esc(T("dash_download"))}
-        </a>
+        </button>
       </div>` : ""}
       <div class="drawer-section">
         <button class="btn-edit-sub" id="editSubBtn">
@@ -1081,6 +1081,29 @@ applyLang();
       renderDrawerView(s, pdfUrl, body);
     });
   }
+
+  window.downloadPDF = async function(id, btn) {
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = "Preparing…";
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) throw new Error("Session expired — please sign in again.");
+      const url = `/api/pdf/download?id=${encodeURIComponent(id)}&token=${encodeURIComponent(session.access_token)}`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e) {
+      alert(e.message || "Download failed.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  };
 
   window.deleteSubmission = async function(id) {
     if (!confirm(T("dash_delete_confirm"))) return;
