@@ -232,7 +232,7 @@ tr:hover td { background: #fafaf9; }
   let booted = false;
 
   sb.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_OUT" && booted) { window.location.replace("/login"); return; }
+    if (event === "SIGNED_OUT" && booted) { window.location.replace("/login?next=/admin"); return; }
     if (session) token = session.access_token;
   });
 
