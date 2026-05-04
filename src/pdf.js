@@ -8,8 +8,12 @@ const { PDFDocument: PdfLib } = require("pdf-lib");
 const { createClient } = require("@supabase/supabase-js");
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+if (!process.env.SUPABASE_SERVICE_KEY && process.env.SUPABASE_ANON_KEY) {
+  console.warn("[pdf] SUPABASE_SERVICE_KEY not set — falling back to SUPABASE_ANON_KEY for storage uploads");
+}
 const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+if (!supabase) console.warn("[pdf] Supabase client not initialised — storage uploads disabled");
 
 const STORAGE_BUCKET = "Resumes";
 const OUTPUT_ROOT = path.join(__dirname, "..", "resume_output");
@@ -181,10 +185,12 @@ async function uploadBody(relativePath, body, contentType) {
     .upload(relativePath, body, { contentType, upsert: true });
 
   if (error) throw error;
+  console.log(`[pdf] uploaded: ${relativePath}`);
 }
 
 async function mirrorSubmission(paths, pdfBuffer, manifestJson, attachmentArtifacts, data, submissionId) {
   if (!supabase) {
+    console.warn("[pdf] mirrorSubmission skipped — no Supabase client");
     return {
       storageOk: false,
       databaseOk: false,
@@ -194,6 +200,7 @@ async function mirrorSubmission(paths, pdfBuffer, manifestJson, attachmentArtifa
       mirrorError: "Supabase credentials are not configured.",
     };
   }
+  console.log(`[pdf] mirrorSubmission: ${attachmentArtifacts.length} attachment(s), bucket=${STORAGE_BUCKET}`);
 
   const warnings = [];
   let pdfUrl = null;

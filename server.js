@@ -346,43 +346,45 @@ app.get("/api/pdf/download", async (req, res) => {
   const workerName = (sub.data.name || "resume").replace(/[^a-z0-9_\- ]/gi, "").trim().replace(/\s+/g, "_") || "resume";
   let pdfBuffer = await buildPDF(sub.data);
 
-  // Fetch and merge attachments (PDF/JPG/PNG) from Supabase storage
+  // Fetch and merge attachments using the manifest stored alongside the submission.
+  // The manifest contains exact storagePaths written at upload time — no reconstruction needed.
   try {
-    // Derive the attachment folder from the stored pdf_path (e.g. "resume_output/mba/web-abc-123/resume.pdf")
-    // so it matches the exact folder used at upload time, not a reconstructed guess.
     const pdfPath = sub.pdf_path || "";
-    const attDir = pdfPath
-      ? pdfPath.replace(/\/resume\.pdf$/, "/attachments")
-      : (() => {
-          const agencyFolder = (sub.data.agency || "unknown_agency").trim()
-            .replace(/[\/\\?%*:|"<>]/g, "-").replace(/\s+/g, " ").replace(/\.+$/g, "") || "unknown_agency";
-          return `resume_output/${agencyFolder}/${submissionId}/attachments`;
-        })();
-    console.log(`[pdf-download] listing attachments at: ${attDir}`);
-    const { data: fileList, error: listErr } = await supabase.storage.from("Resumes").list(attDir);
-    if (listErr) {
-      console.warn(`[pdf-download] storage list error: ${listErr.message}`);
-    } else if (fileList && fileList.length > 0) {
-      console.log(`[pdf-download] found ${fileList.length} file(s): ${fileList.map(f => f.name).join(", ")}`);
-      const attBuffers = [];
-      for (const f of fileList) {
-        const ext = path.extname(f.name).toLowerCase();
-        const mime = ext === ".pdf" ? "application/pdf"
-          : (ext === ".jpg" || ext === ".jpeg") ? "image/jpeg"
-          : ext === ".png" ? "image/png"
-          : null;
-        if (!mime) { console.log(`[pdf-download] skipping non-image/pdf: ${f.name}`); continue; }
-        const { data: fileData, error: dlErr } = await supabase.storage.from("Resumes").download(`${attDir}/${f.name}`);
-        if (dlErr || !fileData) { console.warn(`[pdf-download] download failed for ${f.name}: ${dlErr?.message}`); continue; }
-        const buf = Buffer.from(await fileData.arrayBuffer());
-        attBuffers.push({ name: f.name, mimeType: mime, data: buf });
-      }
-      if (attBuffers.length > 0) {
-        console.log(`[pdf-download] merging ${attBuffers.length} attachment(s)`);
-        pdfBuffer = await mergeAttachmentsIntoPDF(pdfBuffer, attBuffers);
+    if (pdfPath) {
+      const manifestPath = pdfPath.replace(/\/resume\.pdf$/, "/submission.json");
+      console.log(`[pdf-download] fetching manifest: ${manifestPath}`);
+      const { data: manifestBlob, error: manifestErr } = await supabase.storage
+        .from("Resumes").download(manifestPath);
+      if (manifestErr) {
+        console.warn(`[pdf-download] manifest download error: ${manifestErr.message}`);
+      } else if (manifestBlob) {
+        const manifestJson = await manifestBlob.text();
+        const manifest = JSON.parse(manifestJson);
+        const attEntries = Array.isArray(manifest.attachments) ? manifest.attachments : [];
+        console.log(`[pdf-download] manifest has ${attEntries.length} attachment(s)`);
+        const attBuffers = [];
+        for (const att of attEntries) {
+          const mime = (att.mimeType || "").toLowerCase();
+          if (mime !== "application/pdf" && mime !== "image/jpeg" && mime !== "image/png" && mime !== "image/jpg") {
+            console.log(`[pdf-download] skipping unsupported mime: ${att.mimeType} (${att.originalName})`);
+            continue;
+          }
+          const { data: fileBlob, error: dlErr } = await supabase.storage
+            .from("Resumes").download(att.storagePath);
+          if (dlErr || !fileBlob) {
+            console.warn(`[pdf-download] could not download ${att.storagePath}: ${dlErr?.message}`);
+            continue;
+          }
+          const buf = Buffer.from(await fileBlob.arrayBuffer());
+          attBuffers.push({ name: att.originalName, mimeType: mime === "image/jpg" ? "image/jpeg" : mime, data: buf });
+        }
+        if (attBuffers.length > 0) {
+          console.log(`[pdf-download] merging ${attBuffers.length} attachment(s)`);
+          pdfBuffer = await mergeAttachmentsIntoPDF(pdfBuffer, attBuffers);
+        }
       }
     } else {
-      console.log(`[pdf-download] no attachments found at: ${attDir}`);
+      console.warn(`[pdf-download] no pdf_path stored for submission ${submissionId} — skipping attachments`);
     }
   } catch (mergeErr) {
     console.warn(`[pdf-download] merge error (returning resume only): ${mergeErr.message}`);
