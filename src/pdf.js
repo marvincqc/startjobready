@@ -147,7 +147,7 @@ async function writeLocalSubmissionArtifacts(paths, pdfBuffer, data, submissionI
       mimeType: attachment.mimeType,
       size: attachment.size,
       storagePath: attachment.storagePath,
-      localPath: attachment.storagePath,
+      localPath: localAttachmentPath,   // absolute path — used for storage upload
       buffer: attachment.buffer,
       sourcePath: attachment.sourcePath,
     });
@@ -228,16 +228,21 @@ async function mirrorSubmission(paths, pdfBuffer, manifestJson, attachmentArtifa
   }
 
   const attachmentResults = await Promise.allSettled(
-    attachmentArtifacts.map(attachment =>
-      uploadBody(
-        attachment.storagePath,
-        attachment.sourcePath ? fs.createReadStream(attachment.sourcePath) : attachment.buffer,
-        attachment.mimeType || "application/octet-stream"
-      )
-    )
+    attachmentArtifacts.map(attachment => {
+      // Prefer the local copy (absolute path, written moments ago) over the original temp file
+      const body = attachment.localPath
+        ? fs.createReadStream(attachment.localPath)
+        : attachment.buffer;
+      if (!body) {
+        return Promise.reject(new Error(`No data available for ${attachment.originalName}`));
+      }
+      console.log(`[pdf] uploading attachment: ${attachment.storagePath}`);
+      return uploadBody(attachment.storagePath, body, attachment.mimeType || "application/octet-stream");
+    })
   );
   attachmentResults.forEach((result, index) => {
     if (result.status === "rejected") {
+      console.error(`[pdf] attachment upload failed (${attachmentArtifacts[index].originalName}): ${result.reason?.message}`);
       attachmentErrors.push({
         name: attachmentArtifacts[index].originalName,
         error: result.reason?.message || "Attachment upload failed",
