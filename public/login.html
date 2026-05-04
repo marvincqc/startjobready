@@ -105,6 +105,14 @@ applyLang();
   const params = new URLSearchParams(window.location.search);
   const next = params.get("next") || "/dashboard";
 
+  // Hide agency-facing nav/footer links when this is the admin login
+  if (next === "/admin") {
+    const agencyPortalLink = document.querySelector(".nav-register");
+    const cardFooter = document.querySelector(".card-footer");
+    if (agencyPortalLink) agencyPortalLink.style.display = "none";
+    if (cardFooter) cardFooter.style.display = "none";
+  }
+
   if (params.get("oauth_error")) {
     showMsg(T("login_h1") + " — " + "Sign-in failed — the session may have expired. Please try again.", "error");
   }

@@ -10,6 +10,7 @@
     "@supabase/supabase-js": "^2.43.4",
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
+    "pdf-lib": "^1.17.1",
     "pdfkit": "^0.15.0",
     "resend": "^6.12.2"
   },

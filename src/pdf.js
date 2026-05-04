@@ -4,6 +4,7 @@ const fs = require("fs");
 const fsPromises = fs.promises;
 const path = require("path");
 const PDFDocument = require("pdfkit");
+const { PDFDocument: PdfLib } = require("pdf-lib");
 const { createClient } = require("@supabase/supabase-js");
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -375,14 +376,22 @@ function buildPDF(d) {
        .text(`Seeking a ${d.jobType ?? ""} position in Singapore. ${d.experience ?? ""} of relevant work experience. Available to start ${d.availability ?? "immediately"}.`);
 
     sectionTitle("Work Experience");
-    if (!skip(d.job1Title)) { jobBlock(1); jobBlock(2); jobBlock(3); }
-    else doc.fontSize(10).font("Helvetica-Oblique").fillColor("#888888").text("No work history provided.");
+    let hasJobHistory = false;
+    for (let n = 1; n <= 50; n++) {
+      if (skip(d[`job${n}Title`])) break;
+      jobBlock(n);
+      hasJobHistory = true;
+    }
+    if (!hasJobHistory) doc.fontSize(10).font("Helvetica-Oblique").fillColor("#888888").text("No work history provided.");
 
     sectionTitle("Skills");
     if (!skip(d.skills)) pills(d.skills);
     else doc.fontSize(10).font("Helvetica-Oblique").fillColor("#888888").text("Not provided.");
 
-    if (!skip(d.certs)) { sectionTitle("Certifications & Licences"); pills(d.certs); }
+    const certsText = Array.isArray(d.certsList) && d.certsList.length
+      ? d.certsList.map(c => c.name).join(", ")
+      : (d.certs || "");
+    if (!skip(certsText)) { sectionTitle("Certifications & Licences"); pills(certsText); }
 
     sectionTitle("Education");
     doc.fontSize(10).font("Helvetica").fillColor("#111111").text(d.education ?? "—");
@@ -435,4 +444,41 @@ async function generateAndStorePDF(data, submissionId, attachments = []) {
   };
 }
 
-module.exports = { generateAndStorePDF, buildPDF };
+async function mergeAttachmentsIntoPDF(resumeBuffer, attachmentBuffers) {
+  if (!attachmentBuffers || attachmentBuffers.length === 0) return resumeBuffer;
+
+  const merged = await PdfLib.create();
+
+  // Copy resume pages first
+  const resumePdf = await PdfLib.load(resumeBuffer);
+  const resumePages = await merged.copyPages(resumePdf, resumePdf.getPageIndices());
+  for (const page of resumePages) merged.addPage(page);
+
+  for (const att of attachmentBuffers) {
+    const mime = (att.mimeType || "").toLowerCase();
+    try {
+      if (mime === "application/pdf") {
+        const attPdf = await PdfLib.load(att.data);
+        const attPages = await merged.copyPages(attPdf, attPdf.getPageIndices());
+        for (const page of attPages) merged.addPage(page);
+      } else if (mime === "image/jpeg" || mime === "image/jpg") {
+        const img = await merged.embedJpg(att.data);
+        const { width, height } = img.scale(1);
+        const page = merged.addPage([width, height]);
+        page.drawImage(img, { x: 0, y: 0, width, height });
+      } else if (mime === "image/png") {
+        const img = await merged.embedPng(att.data);
+        const { width, height } = img.scale(1);
+        const page = merged.addPage([width, height]);
+        page.drawImage(img, { x: 0, y: 0, width, height });
+      }
+    } catch (err) {
+      console.warn(`Skipping attachment in merge (${att.name}): ${err.message}`);
+    }
+  }
+
+  const mergedBuffer = await merged.save();
+  return Buffer.from(mergedBuffer);
+}
+
+module.exports = { generateAndStorePDF, buildPDF, mergeAttachmentsIntoPDF };

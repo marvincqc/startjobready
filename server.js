@@ -10,7 +10,7 @@ const { pipeline } = require("stream/promises");
 require("dotenv").config();
 
 const { createClient } = require("@supabase/supabase-js");
-const { generateAndStorePDF, buildPDF } = require("./src/pdf");
+const { generateAndStorePDF, buildPDF, mergeAttachmentsIntoPDF } = require("./src/pdf");
 const packageInfo = require("./package.json");
 
 // Supabase admin client (service role for server-side inserts + JWT validation)
@@ -313,26 +313,68 @@ app.get("/api/pdf/download", async (req, res) => {
   const submissionId = req.query.id;
   if (!submissionId) return res.status(400).send("Missing submission id");
 
-  // Verify the submission belongs to the requesting user's agency
-  const { data: agency } = await supabase
-    .from("agencies")
-    .select("id")
-    .eq("auth_id", user.id)
-    .maybeSingle();
-  if (!agency) return res.status(403).send("Forbidden");
+  const isAdmin = user.email === SUPER_ADMIN;
 
-  const { data: sub } = await supabase
-    .from("submissions")
-    .select("data")
-    .eq("id", submissionId)
-    .eq("agency_id", agency.id)
-    .maybeSingle();
+  // Admin can download any submission; agency users only their own
+  let sub;
+  if (isAdmin) {
+    const { data } = await supabase
+      .from("submissions")
+      .select("data, attachment_count")
+      .eq("id", submissionId)
+      .maybeSingle();
+    sub = data;
+  } else {
+    const { data: agency } = await supabase
+      .from("agencies")
+      .select("id")
+      .eq("auth_id", user.id)
+      .maybeSingle();
+    if (!agency) return res.status(403).send("Forbidden");
+    const { data } = await supabase
+      .from("submissions")
+      .select("data, attachment_count")
+      .eq("id", submissionId)
+      .eq("agency_id", agency.id)
+      .maybeSingle();
+    sub = data;
+  }
   if (!sub) return res.status(404).json({ ok: false, error: "Submission not found" });
   if (!sub.data) return res.status(404).json({ ok: false, error: "No data stored for this submission" });
 
-  // Regenerate PDF on the fly from stored submission data — no Storage dependency
+  // Build resume PDF
   const workerName = (sub.data.name || "resume").replace(/[^a-z0-9_\- ]/gi, "").trim().replace(/\s+/g, "_") || "resume";
-  const pdfBuffer = await buildPDF(sub.data);
+  let pdfBuffer = await buildPDF(sub.data);
+
+  // Fetch and merge attachments (PDF/JPG/PNG) from Supabase storage
+  if (sub.attachment_count > 0) {
+    try {
+      const agencyFolder = (sub.data.agency || "unknown_agency").trim().replace(/[\/\\?%*:|"<>]/g, "-").replace(/\s+/g, " ").replace(/\.+$/g, "") || "unknown_agency";
+      const attDir = `resume_output/${agencyFolder}/${submissionId}/attachments`;
+      const { data: fileList } = await supabase.storage.from("Resumes").list(attDir);
+      if (fileList && fileList.length > 0) {
+        const attBuffers = [];
+        for (const f of fileList) {
+          const ext = path.extname(f.name).toLowerCase();
+          const mime = ext === ".pdf" ? "application/pdf"
+            : (ext === ".jpg" || ext === ".jpeg") ? "image/jpeg"
+            : ext === ".png" ? "image/png"
+            : null;
+          if (!mime) continue;
+          const { data: fileData } = await supabase.storage.from("Resumes").download(`${attDir}/${f.name}`);
+          if (!fileData) continue;
+          const buf = Buffer.from(await fileData.arrayBuffer());
+          attBuffers.push({ name: f.name, mimeType: mime, data: buf });
+        }
+        if (attBuffers.length > 0) {
+          pdfBuffer = await mergeAttachmentsIntoPDF(pdfBuffer, attBuffers);
+        }
+      }
+    } catch (mergeErr) {
+      console.warn("Attachment merge failed, returning resume only:", mergeErr.message);
+    }
+  }
+
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="${workerName}_resume.pdf"`);
   res.setHeader("Content-Length", pdfBuffer.length);

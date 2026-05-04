@@ -1085,7 +1085,7 @@ const TR = {
       { k:"name",        ic:"👤", label:"Full name",    q:"What is your full name?",                                        hint:"Enter your full legal name.",                                               type:"text",  ph:"e.g. Ahmad bin Ramli" },
       { k:"dob",         ic:"🎂", label:"Date of birth",q:"What is your date of birth?",                                   hint:"Pick your date from the calendar.",                                         type:"text",  control:"date", validate:"dob" },
       { k:"nationality", ic:"🌏", label:"Nationality",  q:"What is your nationality?",                                     hint:"Select the country that issued your passport.",                             type:"select", opts:["🇸🇬 Singaporean","🇲🇾 Malaysian","🇨🇳 Chinese","🇧🇩 Bangladeshi","🇮🇳 Indian","🇱🇰 Sri Lankan","🇹🇭 Thai","🇲🇲 Myanmarese","🇵🇭 Filipino","🇮🇩 Indonesian","🇺🇸 American","🇬🇧 British","🇦🇺 Australian","🌍 Other"] },
-      { k:"country",     ic:"📍", label:"Country",      q:"Which country are you currently living in?",                    hint:"Select your current country of residence.",                                 type:"select", opts:["🇲🇾 Malaysia","🇨🇳 China","🇧🇩 Bangladesh","🇮🇳 India","🇱🇰 Sri Lanka","🇹🇭 Thailand","🇲🇲 Myanmar","🇵🇭 Philippines","🇮🇩 Indonesia","🇸🇬 Singapore","🇺🇸 United States","🇬🇧 United Kingdom","🇦🇺 Australia","🌍 Other"] },
+      { k:"country",     ic:"📍", label:"Country",      q:"Which country are you currently living in?",                    hint:"Select your current country of residence.",                                 type:"select", opts:["🇸🇬 Singapore","🇲🇾 Malaysia","🇨🇳 China","🇧🇩 Bangladesh","🇮🇳 India","🇱🇰 Sri Lanka","🇹🇭 Thailand","🇲🇲 Myanmar","🇵🇭 Philippines","🇮🇩 Indonesia","🇺🇸 United States","🇬🇧 United Kingdom","🇦🇺 Australia","🌍 Other"] },
       { k:"city",        ic:"🏙", label:"City",         q:"Which city or town are you in?",                                hint:"",                                                                          type:"text",  ph:"e.g. Kuala Lumpur" },
       { k:"phone",       ic:"📞", label:"Phone",        q:"What is your phone number?",                                    hint:"Include your country code. Example: +60 12-345 6789",                       type:"text",  ph:"e.g. +60 12-345 6789", validate:"phone" },
       { k:"email",       ic:"📧", label:"Email",        q:"What is your email address?",                                   hint:"Example: ahmad@gmail.com",                                                  type:"text",  ph:"e.g. ahmad@gmail.com", validate:"email" },
@@ -1097,17 +1097,11 @@ const TR = {
       { k:"job1Title",   ic:"🏢", label:"Job 1 title",  q:"What was your most recent job title?",                         hint:"Example: Construction Worker, Security Guard, Cleaner",                     type:"text",  ph:"e.g. Construction Worker" },
       { k:"job1Company", ic:"🏢", label:"Job 1 company",q:"Which company did you work at?",                               hint:"",                                                                          type:"text",  ph:"e.g. Lim Construction Pte Ltd" },
       { k:"job1Dates",   ic:"🏢", label:"Job 1 dates",  q:"When did you work there?",                                    hint:"Choose start and end months.",                                              type:"text",  control:"monthRange", validate:"daterange" },
-      { k:"job2Title",   ic:"🏢", label:"Job 2 title",  q:"What was your 2nd most recent job title?",                    hint:"Leave blank if you only have one job.",                                     type:"text",  ph:"e.g. Warehouse Worker", optional:true },
-      { k:"job2Company", ic:"🏢", label:"Job 2 company",q:"Which company was that?",                                      hint:"",                                                                          type:"text",  ph:"e.g. ABC Logistics", optional:true },
-      { k:"job2Dates",   ic:"🏢", label:"Job 2 dates",  q:"When did you work there?",                                    hint:"Choose start and end months.",                                              type:"text",  control:"monthRange", optional:true, validate:"daterange" },
-      { k:"job3Title",   ic:"🏢", label:"Job 3 title",  q:"What was your 3rd most recent job title?",                    hint:"Leave blank if you only have two jobs.",                                    type:"text",  ph:"e.g. Cleaner", optional:true },
-      { k:"job3Company", ic:"🏢", label:"Job 3 company",q:"Which company was that?",                                      hint:"",                                                                          type:"text",  ph:"e.g. XYZ Services", optional:true },
-      { k:"job3Dates",   ic:"🏢", label:"Job 3 dates",  q:"When did you work there?",                                    hint:"Choose start and end months.",                                              type:"text",  control:"monthRange", optional:true, validate:"daterange" },
       { k:"skills",      ic:"🔧", label:"Skills",       q:"What skills and tools do you know?",                           hint:"Example: Forklift, scaffolding, welding, cleaning equipment, driving",       type:"text",  ph:"e.g. Forklift, scaffolding, welding" },
-      { k:"certs",       ic:"📜", label:"Certifications",q:"Do you have any certifications or licences?",                 hint:"Example: Forklift licence, BCSS, Food Hygiene cert, Security licence",      type:"text",  ph:"e.g. Forklift licence, BCSS", optional:true },
+      { k:"certs",       ic:"📜", label:"Certifications",q:"Do you have any certifications or licences?",                 hint:"Add each certificate or licence one at a time. You can also upload the file.", type:"certList", optional:true },
       { k:"education",   ic:"🎓", label:"Education",    q:"What is your highest education level?",                        hint:"",                                                                          type:"opts",  opts:["No formal education","Primary school","Secondary school","Vocational / ITE","Diploma","Degree or higher"] },
       { k:"languages",   ic:"🗣", label:"Languages",    q:"Which languages can you speak or read?",                       hint:"Select all that apply.",                                                    type:"multi", opts:["English","Mandarin","Malay","Tamil","Hindi","Bengali"] },
-      { k:"documents",   ic:"📎", label:"Additional documents", q:"Upload any supporting documents before we submit.",       hint:"Add as many files as you can. PDFs, photos, and common document types are welcome.", type:"files", optional:true },
+      { k:"documents",   ic:"📎", label:"Additional documents", q:"Upload any supporting documents before we submit.",       hint:"PDF, JPG, and PNG files only. Add as many as you need.", type:"files", optional:true },
     ],
     reviewSections: {
       routing: "Agency Routing",
@@ -1425,6 +1419,8 @@ let attachments = [];
 let restoredDraft = false;
 let scanPhase = "upload"; // "upload" | "review"
 let scanExtracted = {};
+let certPhase = "list"; // "list" | "enterName" | "uploadFile"
+let certPendingName = "";
 
 function t(key, ...args) {
   const L = TR[lang] ?? TR.en;
@@ -1434,11 +1430,63 @@ function t(key, ...args) {
 
 function getSteps() {
   const overrides = TR[lang]?.stepOverrides;
-  if (!overrides) return TR.en.steps;
-  return TR.en.steps.map(s => {
-    const o = overrides[s.k];
-    return o ? { ...s, ...o } : s;
-  });
+  const ovr = (key) => overrides?.[key] || {};
+
+  const JOB_KEY_RE = /^job\d+(Title|Company|Dates)$/;
+
+  // Split base steps around the job section
+  const beforeJobs = [], afterJobs = [];
+  let inJobSection = false;
+  for (const s of TR.en.steps) {
+    if (JOB_KEY_RE.test(s.k)) { inJobSection = true; continue; }
+    if (!inJobSection) beforeJobs.push({ ...s, ...ovr(s.k) });
+    else afterJobs.push({ ...s, ...ovr(s.k) });
+  }
+
+  // Dynamically generate job steps based on filled data
+  const jobSteps = [];
+  for (let n = 1; n <= 50; n++) {
+    if (n > 1 && !data[`job${n - 1}Title`]) break;
+    jobSteps.push({
+      k: `job${n}Title`,
+      ic: "🏢",
+      label: n === 1 ? "Most recent job" : `Job ${n}`,
+      q: n === 1 ? "What was your most recent job title?" : "What was this job title?",
+      hint: n === 1 ? "Example: Construction Worker, Security Guard, Cleaner" : n === 2 ? "Leave blank if you only have one job." : "",
+      type: "text",
+      ph: "e.g. Construction Worker",
+      optional: n > 1,
+      ...ovr(`job${n}Title`),
+    });
+    // Only add company/dates if this job's title is filled (job1 always gets them)
+    if (n === 1 || data[`job${n}Title`]) {
+      jobSteps.push({
+        k: `job${n}Company`,
+        ic: "🏢",
+        label: `Job ${n} company`,
+        q: "Which company did you work at?",
+        hint: "",
+        type: "text",
+        ph: "e.g. Lim Construction Pte Ltd",
+        optional: n > 1,
+        ...ovr(`job${n}Company`),
+      });
+      jobSteps.push({
+        k: `job${n}Dates`,
+        ic: "🏢",
+        label: `Job ${n} dates`,
+        q: "When did you work there?",
+        hint: "Choose start and end months.",
+        type: "text",
+        control: "monthRange",
+        optional: n > 1,
+        validate: "daterange",
+        ...ovr(`job${n}Dates`),
+      });
+    }
+  }
+
+  return [...beforeJobs, ...jobSteps, ...afterJobs];
 }
 
 function getFieldMeta(key) {
@@ -1658,19 +1706,13 @@ function allowedAttachmentMime(file) {
   const name = String(file?.name ?? "").toLowerCase();
   const mime = String(file?.type ?? "").toLowerCase();
   return (
-    mime.startsWith("image/") ||
     mime === "application/pdf" ||
+    mime === "image/jpeg" ||
+    mime === "image/png" ||
     name.endsWith(".pdf") ||
     name.endsWith(".jpg") ||
     name.endsWith(".jpeg") ||
-    name.endsWith(".png") ||
-    name.endsWith(".webp") ||
-    name.endsWith(".gif") ||
-    name.endsWith(".heic") ||
-    name.endsWith(".doc") ||
-    name.endsWith(".docx") ||
-    name.endsWith(".txt") ||
-    name.endsWith(".rtf")
+    name.endsWith(".png")
   );
 }
 
@@ -1685,10 +1727,11 @@ async function addAttachments(fileList) {
   const existing = new Set(attachments.map(item => item.key));
   const added = [];
 
+  const rejected = [];
   for (const file of files) {
     const key = attachmentKey(file);
     if (existing.has(key)) continue;
-    if (!allowedAttachmentMime(file)) continue;
+    if (!allowedAttachmentMime(file)) { rejected.push(file.name); continue; }
 
     const item = {
       id: makeId(),
@@ -1704,6 +1747,9 @@ async function addAttachments(fileList) {
   }
 
   persistDraft();
+  if (rejected.length) {
+    setStatusMessage(`"${rejected.slice(0,3).join('", "')}" could not be added — only PDF, JPG, and PNG files are accepted.`, "error");
+  }
   return added;
 }
 
@@ -1748,6 +1794,11 @@ function render() {
   renderContextBanner();
   const steps = getSteps();
   const isReview = currentStep >= steps.length;
+
+  // Reset cert phase when not on the certList step
+  if (isReview || steps[currentStep]?.type !== "certList") {
+    certPhase = "list";
+  }
 
   // Progress: (currentStep + 1) / steps.length so last step = 100%
   const pct = Math.min(100, Math.round(((currentStep + 1) / steps.length) * 100));
@@ -1870,13 +1921,29 @@ function render() {
       <button class="btn-next" id="nextBtn" ${!val?'disabled':''} onclick="goNext()">${t("next")}</button>
     </div>`;
   } else if (s.type === "multi") {
-    const selected = val ? val.split(", ").filter(Boolean) : [];
+    const isJobType = s.k === "jobType";
+    let selected, otherCustom, otherIsSelected;
+    if (isJobType) {
+      const knownOpts = s.opts.filter(o => o !== "Other");
+      const jobVals = (val || "").split(", ").filter(Boolean);
+      const unknownVals = jobVals.filter(v => !s.opts.includes(v));
+      otherCustom = unknownVals.join(", ");
+      otherIsSelected = jobVals.includes("Other") || unknownVals.length > 0;
+      selected = [...jobVals.filter(v => knownOpts.includes(v)), ...(otherIsSelected ? ["Other"] : [])];
+    } else {
+      selected = val ? val.split(", ").filter(Boolean) : [];
+    }
     inner += `<div class="opts-grid" id="optsGrid">`;
     s.opts.forEach(o => {
       const sel = selected.includes(o) ? "selected" : "";
       inner += `<button class="opt-btn ${sel}" onclick="toggleMulti(this,'${escHtml(o)}')">${o}</button>`;
     });
     inner += `</div>`;
+    if (isJobType) {
+      inner += `<div id="otherJobContainer" style="display:${otherIsSelected?'':'none'};margin-top:12px;">
+        <input class="field" id="otherJobField" type="text" placeholder="Describe your type of work" value="${escHtml(otherCustom)}" oninput="updateJobTypeCustom(this.value)">
+      </div>`;
+    }
     inner += `<button class="multi-done ${selected.length>0?'show':''}" id="doneBtn" onclick="goNext()">${t("doneBtn")}</button>`;
     inner += `<div class="nav">
       ${currentStep > 0 ? `<button class="btn-back" onclick="goBack()">${t("back")}</button>` : ""}
@@ -1900,7 +1967,7 @@ function render() {
           <div class="upload-zone-ic">📎</div>
           <div>
             <div class="upload-zone-title">Add supporting documents</div>
-            <div class="upload-zone-copy">Drop files here or choose them from your device. You can upload more than one file.</div>
+            <div class="upload-zone-copy">PDF, JPG, and PNG files only. You can upload more than one file.</div>
           </div>
         </div>
         <div class="upload-zone-actions">
@@ -1908,7 +1975,7 @@ function render() {
           ${attachments.length ? `<button class="upload-zone-btn" id="clearDocsBtn" type="button">Clear all</button>` : ""}
         </div>
         <div class="upload-note">Files stay in this browser tab until you submit. Refreshing clears them.</div>
-        <input type="file" id="attachmentInput" hidden multiple />
+        <input type="file" id="attachmentInput" hidden multiple accept=".pdf,.jpg,.jpeg,.png" />
       </div>
       <div class="attachment-list" id="attachmentList">
         ${filesHtml}
@@ -1925,6 +1992,33 @@ function render() {
     wizard.appendChild(card);
     const scanFileInput = document.getElementById("scanFileInput");
     if (scanFileInput) scanFileInput.addEventListener("change", handleScanFile);
+    return;
+  }
+
+  if (s.type === "certList") {
+    card.innerHTML = buildCertListHtml(s);
+    wizard.appendChild(card);
+    // Wire cert file input if in uploadFile phase
+    const certFileInput = document.getElementById("certFileInput");
+    if (certFileInput) {
+      certFileInput.addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!allowedAttachmentMime(file)) {
+          document.getElementById("certUploadErr").textContent = "Only PDF, JPG, and PNG files are accepted.";
+          certFileInput.value = "";
+          return;
+        }
+        document.getElementById("certUploadErr").textContent = "";
+        await addCertWithFile(file);
+        certFileInput.value = "";
+      });
+    }
+    const certNameField = document.getElementById("certNameField");
+    if (certNameField) {
+      setTimeout(() => certNameField.focus(), 100);
+      certNameField.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); certNameNext(); } });
+    }
     return;
   }
 
@@ -2059,8 +2153,8 @@ function renderReview() {
     { title: rs.routing,    keys: ["agency","partnerAgency","partnerCountry","partnerLinkCode","partnerLinkLabel"], editable: key => key === "agency" },
     { title: rs.personal,   keys: ["name","dob","nationality","country","city","phone","email"] },
     { title: rs.job,        keys: ["jobType","workArrange","availability","salary","experience"] },
-    { title: rs.experience, keys: ["job1Title","job1Company","job1Dates","job2Title","job2Company","job2Dates","job3Title","job3Company","job3Dates"] },
-    { title: rs.skills,     keys: ["skills","certs","education","languages"] },
+    { title: rs.experience, keys: (() => { const ks = []; for (let n = 1; n <= 50; n++) { if (n > 1 && !data[`job${n-1}Title`]) break; ks.push(`job${n}Title`,`job${n}Company`,`job${n}Dates`); } return ks; })() },
+    { title: rs.skills,     keys: ["skills","education","languages"] },
   ];
 
   let html = `
@@ -2086,6 +2180,21 @@ function renderReview() {
       ${rows}
     </div>`;
   });
+
+  // Certifications section
+  const certsList = getCertsList();
+  if (certsList.length > 0) {
+    const certsStep = getSteps().find(s => s.k === "certs");
+    html += `<div class="review-section">
+      <div class="review-section-title">Certifications &amp; Licences</div>
+      <div class="review-row" onclick="editField('certs')">
+        <span class="review-ic">📜</span>
+        <span class="review-lb">Certificates</span>
+        <span class="review-val">${escHtml(certsList.map(c => c.name + (c.hasFile ? " 📎" : "")).join(", "))}</span>
+        <span class="review-edit">Edit</span>
+      </div>
+    </div>`;
+  }
 
   if (attachments.length) {
     html += `<div class="review-section">
@@ -2134,11 +2243,46 @@ function selectOpt(btn, val) {
 function toggleMulti(btn, val) {
   btn.classList.toggle("selected");
   const s = getSteps()[currentStep];
+
+  if (s.k === "jobType") {
+    const selectedBtns = Array.from(btn.closest(".opts-grid").querySelectorAll(".opt-btn.selected"));
+    const otherSelected = selectedBtns.some(b => b.textContent.trim() === "Other");
+    const otherContainer = document.getElementById("otherJobContainer");
+    if (otherContainer) otherContainer.style.display = otherSelected ? "" : "none";
+    if (!otherSelected) {
+      document.getElementById("otherJobField")?.value && (document.getElementById("otherJobField").value = "");
+    }
+    rebuildJobType();
+    const db = document.getElementById("doneBtn");
+    if (db) db.classList.toggle("show", selectedBtns.length > 0);
+    return;
+  }
+
   const selected = Array.from(btn.closest(".opts-grid").querySelectorAll(".opt-btn.selected")).map(b => b.textContent.trim());
   data[s.k] = selected.join(", ");
   persistDraft();
   const db = document.getElementById("doneBtn");
   if (db) { db.classList.toggle("show", selected.length > 0); }
+}
+
+function rebuildJobType() {
+  const grid = document.getElementById("optsGrid");
+  if (!grid) return;
+  const s = getSteps()[currentStep];
+  if (s.k !== "jobType") return;
+  const knownOpts = s.opts.filter(o => o !== "Other");
+  const selectedBtns = Array.from(grid.querySelectorAll(".opt-btn.selected"));
+  const stdSelected = selectedBtns.map(b => b.textContent.trim()).filter(v => knownOpts.includes(v));
+  const otherSelected = selectedBtns.some(b => b.textContent.trim() === "Other");
+  const customText = document.getElementById("otherJobField")?.value.trim() || "";
+  const all = [...stdSelected];
+  if (otherSelected) all.push(customText || "Other");
+  data.jobType = all.join(", ");
+  persistDraft();
+}
+
+function updateJobTypeCustom(val) {
+  rebuildJobType();
 }
 
 function skipField() {
@@ -2156,6 +2300,7 @@ function goNext() {
   const agencyLocked = s.k === "agency" && PARTNER_CONTEXT.lockAgency && Boolean(PARTNER_CONTEXT.agency);
 
   if (s.type === "scan") { skipScan(); return; }
+  if (s.type === "certList") { certDone(); return; }
 
   if (s.type === "text") {
     const field = document.getElementById("mainField");
@@ -2211,20 +2356,7 @@ function goNext() {
 }
 
 function advance() {
-  const steps = getSteps();
   currentStep++;
-  // Skip job2/job3 company+dates if title is blank
-  while (currentStep < steps.length) {
-    const s = steps[currentStep];
-    if (s.k === "job2Company" || s.k === "job2Dates") {
-      if (!data["job2Title"]) { currentStep++; continue; }
-    }
-    if (s.k === "job3Title" && !data["job2Title"]) { currentStep++; continue; }
-    if (s.k === "job3Company" || s.k === "job3Dates") {
-      if (!data["job3Title"]) { currentStep++; continue; }
-    }
-    break;
-  }
   render();
   window.scrollTo(0,0);
 }
@@ -2237,16 +2369,21 @@ function goBack() {
     window.scrollTo(0, 0);
     return;
   }
+  if (getSteps()[currentStep]?.type === "certList" && certPhase === "uploadFile") {
+    certPhase = "enterName";
+    render();
+    window.scrollTo(0, 0);
+    return;
+  }
+  if (getSteps()[currentStep]?.type === "certList" && certPhase === "enterName") {
+    certPhase = "list";
+    render();
+    window.scrollTo(0, 0);
+    return;
+  }
   if (currentStep <= 0) return;
-  const steps = getSteps();
   currentStep--;
-  // Skip backwards over steps whose title is blank (same logic as advance())
-  while (currentStep > 0) {
-    const s = steps[currentStep];
-    if ((s.k === "job2Company" || s.k === "job2Dates") && !data["job2Title"]) { currentStep--; continue; }
-    if (s.k === "job3Title" && !data["job2Title"]) { currentStep--; continue; }
-    if ((s.k === "job3Company" || s.k === "job3Dates") && !data["job3Title"]) { currentStep--; continue; }
-    break;
+  {
   }
   render();
   window.scrollTo(0, 0);
@@ -2522,6 +2659,148 @@ const SCAN_REVIEW_FIELDS = [
   { k:"job1Title",   label:"Most recent job title", ic:"🏢" },
   { k:"job1Company", label:"Most recent employer",  ic:"🏢" },
 ];
+
+// ── Cert list helpers ─────────────────────────────────────────────────────────
+
+function getCertsList() {
+  return Array.isArray(data.certsList) ? data.certsList : [];
+}
+
+function buildCertListHtml(s) {
+  const certs = getCertsList();
+  const backBtn = currentStep > 0 ? `<button class="btn-back" onclick="goBack()">${t("back")}</button>` : "";
+
+  if (certPhase === "enterName") {
+    const skipLabel = certs.length === 0 ? t("naBtn") : "← Back to list";
+    return `
+      <div class="step-icon">${s.ic}</div>
+      <div class="step-label">${s.label}</div>
+      <div class="step-q">What is the name of this certification or licence?</div>
+      <div class="step-hint">Example: Forklift Licence, BCSS, Food Hygiene Certificate, Security Licence</div>
+      <input class="field" id="certNameField" type="text" placeholder="e.g. Forklift Licence" value="">
+      <div class="field-error" id="certNameErr"></div>
+      <div class="nav">
+        <button class="btn-back" onclick="certNameBack()">${skipLabel}</button>
+        <button class="btn-next" onclick="certNameNext()">Next →</button>
+      </div>
+    `;
+  }
+
+  if (certPhase === "uploadFile") {
+    return `
+      <div class="step-icon">📎</div>
+      <div class="step-label">Certificate file</div>
+      <div class="step-q">Upload the file for: <strong>${escHtml(certPendingName)}</strong></div>
+      <div class="step-hint">PDF, JPG, or PNG only. This is optional — tap Skip if you don't have the file right now.</div>
+      <div class="upload-zone" id="certUploadZone" tabindex="0" role="button" style="margin-top:12px;" onclick="document.getElementById('certFileInput').click()">
+        <div class="upload-zone-head">
+          <div class="upload-zone-ic">📄</div>
+          <div>
+            <div class="upload-zone-title">Choose certificate file</div>
+            <div class="upload-zone-copy">PDF, JPG, or PNG only.</div>
+          </div>
+        </div>
+        <div class="upload-zone-actions">
+          <button class="upload-zone-btn" type="button" onclick="event.stopPropagation();document.getElementById('certFileInput').click()">Choose file</button>
+        </div>
+        <input type="file" id="certFileInput" hidden accept=".pdf,.jpg,.jpeg,.png">
+      </div>
+      <div id="certUploadErr" style="font-size:12px;color:#c53030;margin-top:6px;"></div>
+      <div class="nav" style="margin-top:16px;">
+        <button class="btn-back" onclick="certSkipFile()">Skip — no file</button>
+      </div>
+    `;
+  }
+
+  // Phase: list
+  const certRows = certs.length
+    ? certs.map((c, i) => `
+        <div class="attachment-row">
+          <div class="attachment-meta">
+            <div class="attachment-name">${escHtml(c.name)}</div>
+            <div class="attachment-info">${c.hasFile ? "📎 File attached" : "No file"}</div>
+          </div>
+          <button class="attachment-remove" type="button" onclick="removeCert(${i})">Remove</button>
+        </div>
+      `).join("")
+    : "";
+
+  return `
+    <div class="step-icon">${s.ic}</div>
+    <div class="step-label">${s.label}</div>
+    <div class="step-q">${s.q}</div>
+    <div class="step-hint">${s.hint}</div>
+    ${certRows ? `<div class="attachment-list" style="margin-bottom:12px;">${certRows}</div>` : ""}
+    <button class="opt-btn" style="width:100%;margin-bottom:8px;" onclick="certPhase='enterName';render()">+ Add a certificate or licence</button>
+    ${certs.length === 0 ? `<button class="opt-btn" style="width:100%;text-align:center;color:var(--muted);" onclick="certSkipAll()">${t("naBtn")}</button>` : ""}
+    <div class="nav" style="margin-top:12px;">
+      ${backBtn}
+      ${certs.length > 0 ? `<button class="btn-next" onclick="certDone()">Done →</button>` : ""}
+    </div>
+  `;
+}
+
+function certNameNext() {
+  const field = document.getElementById("certNameField");
+  const errEl = document.getElementById("certNameErr");
+  const name = field?.value.trim() || "";
+  if (!name) {
+    if (errEl) errEl.textContent = "Please enter a certificate name.";
+    return;
+  }
+  certPendingName = name;
+  certPhase = "uploadFile";
+  render();
+}
+
+function certNameBack() {
+  const certs = getCertsList();
+  if (certs.length === 0) {
+    certSkipAll();
+  } else {
+    certPhase = "list";
+    render();
+  }
+}
+
+async function addCertWithFile(file) {
+  const added = await addAttachments([file]);
+  const certEntry = { name: certPendingName, hasFile: added.length > 0 };
+  if (added.length > 0) added[0].certName = certPendingName;
+  if (!Array.isArray(data.certsList)) data.certsList = [];
+  data.certsList.push(certEntry);
+  persistDraft();
+  certPendingName = "";
+  certPhase = "list";
+  render();
+}
+
+function certSkipFile() {
+  if (!Array.isArray(data.certsList)) data.certsList = [];
+  data.certsList.push({ name: certPendingName, hasFile: false });
+  persistDraft();
+  certPendingName = "";
+  certPhase = "list";
+  render();
+}
+
+function certSkipAll() {
+  data.certsList = [];
+  persistDraft();
+  advance();
+}
+
+function certDone() {
+  persistDraft();
+  advance();
+}
+
+function removeCert(index) {
+  if (!Array.isArray(data.certsList)) return;
+  data.certsList.splice(index, 1);
+  persistDraft();
+  render();
+}
 
 function buildScanUploadHtml() {
   const s = getSteps()[currentStep];
