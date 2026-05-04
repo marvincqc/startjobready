@@ -6,6 +6,7 @@
 <title>Dashboard — JobReady</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
+<script src="/lang.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 
@@ -39,6 +40,8 @@ a { color: inherit; text-decoration: none; }
 .agency-name-badge { font-size: 13px; font-weight: 700; color: var(--muted); }
 .btn-signout { font-size: 13px; font-weight: 600; color: var(--muted); border: none; background: none; cursor: pointer; padding: 0; }
 .btn-signout:hover { color: var(--ink); }
+.jr-lang-sel { font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); background: transparent; border: none; cursor: pointer; outline: none; }
+.jr-lang-sel:hover { color: var(--ink); }
 
 /* ── PLAN CHIP & USAGE ────────────────────────────────────────── */
 .plan-chip {
@@ -405,14 +408,15 @@ a { color: inherit; text-decoration: none; }
         <span class="nav-name">JobReady</span>
       </a>
       <div class="nav-links">
-        <a href="/#how-it-works">How it works</a>
-        <a href="/pricing">Pricing</a>
-        <a href="/#contact">Contact</a>
+        <a href="/#how-it-works" data-i18n="nav_how">How it works</a>
+        <a href="/pricing" data-i18n="nav_pricing">Pricing</a>
+        <a href="/#contact" data-i18n="nav_contact">Contact</a>
       </div>
       <div class="nav-right">
+        <div id="langSelContainer"></div>
         <span class="agency-name-badge" id="agencyBadge"></span>
         <button class="plan-chip" id="planChip" style="display:none;" type="button">Free</button>
-        <button class="btn-signout" id="signOutBtn">Sign out</button>
+        <button class="btn-signout" id="signOutBtn" data-i18n="nav_sign_out">Sign out</button>
       </div>
     </div>
   </div>
@@ -423,8 +427,8 @@ a { color: inherit; text-decoration: none; }
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab active" data-tab="submissions">Submissions</button>
-      <button class="tab" data-tab="links">Partner Links</button>
+      <button class="tab active" data-tab="submissions" data-i18n="dash_tab_submissions">Submissions</button>
+      <button class="tab" data-tab="links" data-i18n="dash_tab_links">Partner Links</button>
     </div>
 
     <!-- Usage card -->
@@ -433,12 +437,12 @@ a { color: inherit; text-decoration: none; }
     <!-- Submissions panel -->
     <div class="tab-panel active" id="panel-submissions">
       <div class="section-header">
-        <h2 class="section-title">Submissions</h2>
+        <h2 class="section-title" data-i18n="dash_tab_submissions">Submissions</h2>
       </div>
       <div class="filter-bar">
-        <input type="search" class="filter-search" id="filterSearch" placeholder="Search by name…" autocomplete="off">
+        <input type="search" class="filter-search" id="filterSearch" data-i18n-ph="dash_search_ph" placeholder="Search by name…" autocomplete="off">
         <select class="filter-select" id="filterNationality">
-          <option value="">All nationalities</option>
+          <option value="" data-i18n="dash_all_nat">All nationalities</option>
           <option>🇸🇬 Singaporean</option>
           <option>🇲🇾 Malaysian</option>
           <option>🇨🇳 Chinese</option>
@@ -451,42 +455,42 @@ a { color: inherit; text-decoration: none; }
           <option>🇮🇩 Indonesian</option>
           <option>🌍 Other</option>
         </select>
-        <button class="filter-clear" id="filterClear" style="display:none;">✕ Clear</button>
+        <button class="filter-clear" id="filterClear" style="display:none;" data-i18n="dash_clear">✕ Clear</button>
       </div>
       <div id="submissionsContent"><div class="spinner"></div></div>
-      <button class="load-more-btn" id="loadMoreBtn" style="display:none;">Load more</button>
+      <button class="load-more-btn" id="loadMoreBtn" style="display:none;" data-i18n="dash_load_more">Load more</button>
     </div>
 
     <!-- Links panel -->
     <div class="tab-panel" id="panel-links">
       <div class="section-header">
-        <h2 class="section-title">Partner Links</h2>
+        <h2 class="section-title" data-i18n="dash_tab_links">Partner Links</h2>
         <button class="btn-primary" id="newLinkBtn">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          New link
+          <span data-i18n="dash_new_link">New link</span>
         </button>
       </div>
       <div class="new-link-form" id="newLinkForm">
         <div class="form-row">
           <div class="form-group">
-            <label>Partner / Sending Agency Name</label>
-            <input type="text" id="partnerName" placeholder="e.g. KL Staffing">
+            <label data-i18n="dash_link_name_label">Partner / Sending Agency Name</label>
+            <input type="text" id="partnerName" data-i18n-ph="dash_link_name_ph" placeholder="e.g. KL Staffing">
           </div>
           <div class="form-group">
-            <label>Country</label>
-            <input type="text" id="partnerCountry" placeholder="e.g. Malaysia">
+            <label data-i18n="dash_link_country_label">Country</label>
+            <input type="text" id="partnerCountry" data-i18n-ph="dash_link_country_ph" placeholder="e.g. Malaysia">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Link code (your short identifier)</label>
-            <input type="text" id="linkCode" placeholder="e.g. kl2025" maxlength="24">
+            <label data-i18n="dash_link_code_label">Link code (your short identifier)</label>
+            <input type="text" id="linkCode" data-i18n-ph="dash_link_code_ph" placeholder="e.g. kl2025" maxlength="24">
           </div>
         </div>
         <div id="newLinkMsg"></div>
         <div class="form-actions">
-          <button class="btn-save" id="saveLinkBtn">Create link</button>
-          <button class="btn-cancel" id="cancelLinkBtn">Cancel</button>
+          <button class="btn-save" id="saveLinkBtn" data-i18n="dash_create">Create link</button>
+          <button class="btn-cancel" id="cancelLinkBtn" data-i18n="dash_cancel">Cancel</button>
         </div>
       </div>
       <div id="linksContent"><div class="spinner"></div></div>
@@ -500,13 +504,13 @@ a { color: inherit; text-decoration: none; }
   <div class="upgrade-modal" role="dialog" aria-modal="true">
     <div class="upgrade-head">
       <div>
-        <div class="upgrade-title">Upgrade your plan</div>
-        <div class="upgrade-sub" id="upgradeSub">Get more partner links and submissions.</div>
+        <div class="upgrade-title" data-i18n="dash_upgrade_title">Upgrade your plan</div>
+        <div class="upgrade-sub" id="upgradeSub" data-i18n="dash_upgrade_sub">Get more partner links and submissions.</div>
       </div>
       <button class="upgrade-close" id="upgradeClose" aria-label="Close">✕</button>
     </div>
     <div class="tiers" id="tiersGrid"></div>
-    <p style="font-size:12px;color:var(--muted);margin-top:14px;">Plans renew monthly. <a href="/#contact" style="color:var(--brand);font-weight:700;">Contact us</a> with any questions.</p>
+    <p style="font-size:12px;color:var(--muted);margin-top:14px;"><span data-i18n="dash_upgrade_footer">Plans renew monthly.</span> <a href="/#contact" style="color:var(--brand);font-weight:700;" data-i18n="dash_upgrade_contact">Contact us</a></p>
   </div>
 </div>
 
@@ -522,6 +526,9 @@ a { color: inherit; text-decoration: none; }
 </div>
 
 <script>
+document.getElementById("langSelContainer").innerHTML = buildLangSelector();
+applyLang();
+
 (function () {
   const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
   let token = null;
@@ -536,14 +543,14 @@ a { color: inherit; text-decoration: none; }
   let hasLinks = null;     // null = not loaded, true/false = loaded
   let hasSubmissions = null;
 
-  const PLAN_LABELS = { free: "Free", pro: "Pro", scale: "Scale" };
-  const TIERS = [
-    { key: "free",  name: "Free",  price: "S$0",   per: "forever",
-      features: ["3 active partner links", "20 submissions / month", "PDF downloads", "Worker attachments"] },
-    { key: "pro",   name: "Pro",   price: "S$29",  per: "per month",
-      features: ["25 active partner links", "500 submissions / month", "PDF downloads", "Worker attachments"] },
-    { key: "scale", name: "Scale", price: "S$129", per: "per month",
-      features: ["Unlimited partner links", "Unlimited submissions", "PDF downloads", "Priority support"] },
+  const PLAN_LABELS = () => ({ free: T("dash_plan_free"), pro: T("dash_plan_pro"), scale: T("dash_plan_scale") });
+  const TIERS = () => [
+    { key: "free",  name: T("pricing_free_name"),  price: T("pricing_free_price"),   per: T("pricing_free_per"),
+      features: [T("pricing_free_f1"), T("pricing_free_f2"), T("pricing_free_f3"), T("pricing_free_f4")] },
+    { key: "pro",   name: T("pricing_pro_name"),   price: T("pricing_pro_price"),  per: T("pricing_pro_per"),
+      features: [T("pricing_pro_f1"), T("pricing_pro_f2"), T("pricing_pro_f3"), T("pricing_pro_f4")] },
+    { key: "scale", name: T("pricing_scale_name"), price: T("pricing_scale_price"), per: T("pricing_scale_per"),
+      features: [T("pricing_scale_f1"), T("pricing_scale_f2"), T("pricing_scale_f3"), T("pricing_scale_f5")] },
   ];
 
   // ── Auth guard ──────────────────────────────────────────────────────────────
@@ -568,7 +575,7 @@ a { color: inherit; text-decoration: none; }
   setTimeout(() => {
     if (booted) return;
     const el = document.getElementById("submissionsContent");
-    if (el) el.innerHTML = `<div class="spinner"></div><p style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px;">Taking a moment — hang tight…</p>`;
+    if (el) el.innerHTML = `<div class="spinner"></div><p style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px;">${esc(T("dash_loading_hint"))}</p>`;
   }, 2000);
 
   // Fallback: if onAuthStateChange never fires (no hash, no stored session)
@@ -620,7 +627,7 @@ a { color: inherit; text-decoration: none; }
   function renderPlanChip() {
     const chip = document.getElementById("planChip");
     if (!chip) return;
-    chip.textContent = PLAN_LABELS[currentPlan] || "Free";
+    chip.textContent = PLAN_LABELS()[currentPlan] || T("dash_plan_free");
     chip.classList.remove("plan-pro", "plan-scale");
     if (currentPlan === "pro") chip.classList.add("plan-pro");
     if (currentPlan === "scale") chip.classList.add("plan-scale");
@@ -633,8 +640,8 @@ a { color: inherit; text-decoration: none; }
     if (currentPlan === "scale") { card.style.display = "none"; return; }
 
     const u = currentUsage;
-    const subRow = buildUsageRow("Submissions", u.submissionsThisMonth, u.submissionsLimit, "this month");
-    const linkRow = buildUsageRow("Partner links", u.activeLinks, u.activeLinksLimit, "active");
+    const subRow = buildUsageRow(T("dash_tab_submissions"), u.submissionsThisMonth, u.submissionsLimit, T("dash_subs_month"));
+    const linkRow = buildUsageRow(T("dash_tab_links"), u.activeLinks, u.activeLinksLimit, T("dash_links_active"));
     card.innerHTML = subRow + linkRow;
     card.style.display = "grid";
 
@@ -656,7 +663,7 @@ a { color: inherit; text-decoration: none; }
         <div class="usage-bar${cls}"><div class="usage-bar-fill" style="width:${pct}%"></div></div>
         <span class="usage-count${pct >= 100 ? " danger" : ""}">
           ${used} / ${limitTxt} ${esc(suffix)}
-          ${atCap ? `<button class="usage-upgrade" data-upgrade type="button">Upgrade</button>` : ""}
+          ${atCap ? `<button class="usage-upgrade" data-upgrade type="button">${esc(T("dash_upgrade_btn"))}</button>` : ""}
         </span>
       </div>
     `;
@@ -679,13 +686,13 @@ a { color: inherit; text-decoration: none; }
   // ── Upgrade modal ──────────────────────────────────────────────────────────
   function openUpgradeModal() {
     const grid = document.getElementById("tiersGrid");
-    grid.innerHTML = TIERS.map(t => {
+    grid.innerHTML = TIERS().map(t => {
       const isCurrent = t.key === currentPlan;
       const cta = isCurrent
-        ? `<span class="tier-cta disabled">Current plan</span>`
+        ? `<span class="tier-cta disabled">${esc(T("dash_current_plan"))}</span>`
         : (t.key === "free"
             ? `<span class="tier-cta disabled">—</span>`
-            : `<a class="tier-cta" href="/#contact">Contact us</a>`);
+            : `<a class="tier-cta" href="/#contact">${esc(T("dash_upgrade_contact"))}</a>`);
       return `
         <div class="tier${isCurrent ? " current" : ""}">
           <div class="tier-name">${esc(t.name)}</div>
@@ -755,13 +762,13 @@ a { color: inherit; text-decoration: none; }
 
       if (!cursor && list.length === 0) {
         if (isFiltering) {
-          container.innerHTML = `<div class="card"><div class="empty-state">No submissions match your search.</div></div>`;
+          container.innerHTML = `<div class="card"><div class="empty-state">${esc(T("dash_empty_subs_filtered"))}</div></div>`;
         } else {
           hasSubmissions = false;
           if (hasLinks === null) {
             // Links not loaded yet — keep spinner, maybeSwitchToOnboarding will handle render
           } else {
-            maybeSwitchToOnboarding() || (container.innerHTML = `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`);
+            maybeSwitchToOnboarding() || (container.innerHTML = `<div class="card"><div class="empty-state">${esc(T("dash_empty_subs"))}</div></div>`);
           }
         }
         loadingMore = false; return;
@@ -791,28 +798,28 @@ a { color: inherit; text-decoration: none; }
     const container = document.getElementById("submissionsContent");
     container.innerHTML = `
       <div class="onboarding-card">
-        <div class="onboarding-eyebrow">Welcome to JobReady</div>
-        <h2 class="onboarding-title">You're all set — let's get your first application</h2>
-        <p class="onboarding-sub">It only takes a minute to set up. Here's how it works:</p>
+        <div class="onboarding-eyebrow">${esc(T("dash_onboard_eyebrow"))}</div>
+        <h2 class="onboarding-title">${esc(T("dash_onboard_title"))}</h2>
+        <p class="onboarding-sub">${esc(T("dash_onboard_sub"))}</p>
         <div class="onboarding-steps">
           <div class="onboarding-step">
             <div class="onboarding-step-num">1</div>
-            <div class="onboarding-step-title">Create a partner link</div>
-            <div class="onboarding-step-desc">Each link is tied to a sending agency or country. You can have up to 3 on the free plan.</div>
+            <div class="onboarding-step-title">${esc(T("dash_onboard_s1_title"))}</div>
+            <div class="onboarding-step-desc">${esc(T("dash_onboard_s1_desc"))}</div>
           </div>
           <div class="onboarding-step">
             <div class="onboarding-step-num">2</div>
-            <div class="onboarding-step-title">Share it with workers</div>
-            <div class="onboarding-step-desc">Send the link to your overseas partner or directly to workers via WhatsApp or email.</div>
+            <div class="onboarding-step-title">${esc(T("dash_onboard_s2_title"))}</div>
+            <div class="onboarding-step-desc">${esc(T("dash_onboard_s2_desc"))}</div>
           </div>
           <div class="onboarding-step">
             <div class="onboarding-step-num">3</div>
-            <div class="onboarding-step-title">Receive applications</div>
-            <div class="onboarding-step-desc">Workers fill in their details in their language. You get notified and can download their PDF resume.</div>
+            <div class="onboarding-step-title">${esc(T("dash_onboard_s3_title"))}</div>
+            <div class="onboarding-step-desc">${esc(T("dash_onboard_s3_desc"))}</div>
           </div>
         </div>
         <button class="btn-onboarding" id="onboardingCta">
-          Create your first partner link
+          ${esc(T("dash_onboard_cta"))}
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>`;
@@ -877,7 +884,7 @@ a { color: inherit; text-decoration: none; }
   async function openDrawer(id) {
     const overlay = document.getElementById("drawerOverlay");
     const body = document.getElementById("drawerBody");
-    document.getElementById("drawerName").textContent = "Loading…";
+    document.getElementById("drawerName").textContent = T("dash_loading");
     body.innerHTML = `<div class="spinner"></div>`;
     overlay.classList.add("open");
 
@@ -894,38 +901,38 @@ a { color: inherit; text-decoration: none; }
   function renderDrawerView(s, pdfUrl, body) {
     const date = new Date(s.created_at).toLocaleString("en-SG");
     const fields = [
-      { k: "Nationality", v: s.nationality },
-      { k: "Job type",    v: s.job_type },
-      { k: "Submitted",   v: date },
-      { k: "Attachments", v: s.attachment_count || 0 },
+      { k: T("dash_nationality"), v: s.nationality },
+      { k: T("dash_job_type"),    v: s.job_type },
+      { k: T("dash_submitted"),   v: date },
+      { k: T("dash_attachments"), v: s.attachment_count || 0 },
     ];
     body.innerHTML = `
       <div class="drawer-section">
-        <div class="drawer-label">Details</div>
+        <div class="drawer-label">${esc(T("dash_details"))}</div>
         <div class="drawer-fields">
-          ${fields.map(f => `<div class="drawer-field"><div class="drawer-field-key">${f.k}</div><div class="drawer-field-val">${esc(String(f.v ?? "—"))}</div></div>`).join("")}
+          ${fields.map(f => `<div class="drawer-field"><div class="drawer-field-key">${esc(f.k)}</div><div class="drawer-field-val">${esc(String(f.v ?? "—"))}</div></div>`).join("")}
         </div>
       </div>
       ${s.data ? `
       <div class="drawer-section">
-        <div class="drawer-label">Application data</div>
+        <div class="drawer-label">${esc(T("dash_app_data"))}</div>
         <div class="drawer-data">${esc(JSON.stringify(s.data, null, 2))}</div>
       </div>` : ""}
       ${pdfUrl ? `
       <div class="drawer-section">
         <a class="btn-download" href="${pdfUrl}" target="_blank" rel="noopener">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Download resume PDF
+          ${esc(T("dash_download"))}
         </a>
       </div>` : ""}
       <div class="drawer-section">
         <button class="btn-edit-sub" id="editSubBtn">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-          Edit submission
+          ${esc(T("dash_edit_sub"))}
         </button>
         <button class="btn-delete-sub" onclick="deleteSubmission('${s.id}')">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 3h9M5 3V2h3v1M10 3l-.7 8H3.7L3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Delete submission
+          ${esc(T("dash_delete_sub"))}
         </button>
       </div>
     `;
@@ -968,7 +975,7 @@ a { color: inherit; text-decoration: none; }
           `<option value="${esc(o)}"${value === o ? " selected" : ""}>${esc(o)}</option>`
         ).join("");
         return `<div class="drawer-edit-field"><label>${label}</label>
-          <select ${attrName}="${esc(attrValue)}"><option value="">— Select —</option>${opts}</select>
+          <select ${attrName}="${esc(attrValue)}"><option value="">${esc(T("dash_select"))}</option>${opts}</select>
         </div>`;
       }
       if (MULTI_OPTS[labelKey]) {
@@ -1001,13 +1008,13 @@ a { color: inherit; text-decoration: none; }
 
     body.innerHTML = `
       <div class="drawer-section">
-        <div class="drawer-label">Edit submission</div>
+        <div class="drawer-label">${esc(T("dash_edit_title"))}</div>
         ${fieldsHtml}
       </div>
       <div id="editSubMsg"></div>
       <div class="drawer-section">
-        <button class="btn-save" id="saveSubBtn" style="width:100%;height:44px;border-radius:999px;">Save changes</button>
-        <button class="btn-cancel" id="cancelSubBtn" style="width:100%;height:40px;border-radius:999px;margin-top:8px;">Cancel</button>
+        <button class="btn-save" id="saveSubBtn" style="width:100%;height:44px;border-radius:999px;">${esc(T("dash_save"))}</button>
+        <button class="btn-cancel" id="cancelSubBtn" style="width:100%;height:40px;border-radius:999px;margin-top:8px;">${esc(T("dash_cancel"))}</button>
       </div>
     `;
 
@@ -1015,7 +1022,7 @@ a { color: inherit; text-decoration: none; }
     document.getElementById("saveSubBtn").addEventListener("click", async () => {
       const btn = document.getElementById("saveSubBtn");
       const msgEl = document.getElementById("editSubMsg");
-      btn.disabled = true; btn.textContent = "Saving…";
+      btn.disabled = true; btn.textContent = T("dash_loading");
 
       // Collect top-level text/select updates
       const updates = {};
@@ -1052,9 +1059,9 @@ a { color: inherit; text-decoration: none; }
         body: JSON.stringify(updates),
       });
       const json = await res.json();
-      btn.disabled = false; btn.textContent = "Save changes";
+      btn.disabled = false; btn.textContent = T("dash_save");
       if (!json.ok) {
-        msgEl.innerHTML = `<p style="color:#c53030;font-size:13px;margin-bottom:12px;">${esc(json.error)}</p>`;
+        msgEl.innerHTML = `<p style="color:#c53030;font-size:13px;margin-bottom:12px;">${esc(json.error || T("dash_save_err"))}</p>`;
         return;
       }
 
@@ -1076,7 +1083,7 @@ a { color: inherit; text-decoration: none; }
   }
 
   window.deleteSubmission = async function(id) {
-    if (!confirm("Delete this submission? This cannot be undone.")) return;
+    if (!confirm(T("dash_delete_confirm"))) return;
     const res = await fetch(`/api/submissions/${encodeURIComponent(id)}`, {
       method: "DELETE",
       headers: auth(),
@@ -1108,9 +1115,9 @@ a { color: inherit; text-decoration: none; }
       // If submissions already reported empty, switch to onboarding
       if (!maybeSwitchToOnboarding() && hasSubmissions === false) {
         document.getElementById("submissionsContent").innerHTML =
-          `<div class="card"><div class="empty-state">No submissions yet. Share your partner links to start receiving applications.</div></div>`;
+          `<div class="card"><div class="empty-state">${esc(T("dash_empty_subs"))}</div></div>`;
       }
-      container.innerHTML = `<div class="card"><div class="empty-state">No partner links yet. Click <strong>New link</strong> above to create your first one.</div></div>`;
+      container.innerHTML = `<div class="card"><div class="empty-state">${esc(T("dash_empty_links"))}</div></div>`;
       // Auto-open the new link form on first visit
       document.getElementById("newLinkForm").classList.add("open");
       return;
@@ -1133,16 +1140,16 @@ a { color: inherit; text-decoration: none; }
         <div class="link-meta">${l.partner_country ? esc(l.partner_country) + " · " : ""}Code: <strong>${esc(l.full_slug)}</strong></div>
       </div>
       <div class="link-url" title="${esc(url)}">${esc(url)}</div>
-      <button class="copy-btn" data-url="${esc(url)}">Copy</button>
-      <span class="status-badge ${l.active ? "active" : "inactive"}">${l.active ? "Active" : "Inactive"}</span>
-      <button class="toggle-btn" data-id="${l.id}" data-active="${l.active}">${l.active ? "Disable" : "Enable"}</button>
+      <button class="copy-btn" data-url="${esc(url)}">${esc(T("dash_copy"))}</button>
+      <span class="status-badge ${l.active ? "active" : "inactive"}">${esc(l.active ? T("dash_active") : T("dash_inactive"))}</span>
+      <button class="toggle-btn" data-id="${l.id}" data-active="${l.active}">${esc(l.active ? T("dash_disable") : T("dash_enable"))}</button>
     `;
 
     div.querySelector(".copy-btn").addEventListener("click", function () {
       navigator.clipboard.writeText(this.dataset.url).then(() => {
-        this.textContent = "Copied!";
+        this.textContent = T("dash_copied");
         this.classList.add("copied");
-        setTimeout(() => { this.textContent = "Copy"; this.classList.remove("copied"); }, 2000);
+        setTimeout(() => { this.textContent = T("dash_copy"); this.classList.remove("copied"); }, 2000);
       });
     });
 
@@ -1198,12 +1205,12 @@ a { color: inherit; text-decoration: none; }
     const msgEl = document.getElementById("newLinkMsg");
 
     if (!partnerName || !code) {
-      msgEl.innerHTML = `<div class="form-msg error">Partner name and code are required.</div>`;
+      msgEl.innerHTML = `<div class="form-msg error">${esc(T("dash_link_err_required"))}</div>`;
       return;
     }
 
     const btn = document.getElementById("saveLinkBtn");
-    btn.disabled = true; btn.textContent = "Creating…";
+    btn.disabled = true; btn.textContent = T("dash_loading");
 
     const res = await fetch("/api/links", {
       method: "POST",
@@ -1212,16 +1219,16 @@ a { color: inherit; text-decoration: none; }
     });
     const json = await res.json();
 
-    btn.disabled = false; btn.textContent = "Create link";
+    btn.disabled = false; btn.textContent = T("dash_create");
 
     if (!json.ok) {
       if (json.code === "plan_limit_links") {
-        msgEl.innerHTML = `<div class="form-msg error">You've hit your plan's active link limit (${json.limit}). <a href="#" id="msgUpgradeLink" style="color:var(--brand);font-weight:700;">Upgrade to add more</a>.</div>`;
+        msgEl.innerHTML = `<div class="form-msg error">${esc(T("dash_link_err_limit").replace("{limit}", json.limit))} <a href="#" id="msgUpgradeLink" style="color:var(--brand);font-weight:700;">${esc(T("dash_upgrade_btn"))}</a></div>`;
         const up = document.getElementById("msgUpgradeLink");
         if (up) up.addEventListener("click", (e) => { e.preventDefault(); openUpgradeModal(); });
         return;
       }
-      msgEl.innerHTML = `<div class="form-msg error">${esc(json.error || "Failed to create link.")}</div>`;
+      msgEl.innerHTML = `<div class="form-msg error">${esc(json.error || T("dash_link_err_generic"))}</div>`;
       return;
     }
 

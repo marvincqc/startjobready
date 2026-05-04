@@ -2288,6 +2288,7 @@ function showSubmitErr(msg) {
 
 function changeLang(l) {
   lang = l;
+  localStorage.setItem("jr_lang", l);
   persistDraft();
   render();
 }
@@ -2816,6 +2817,11 @@ function escHtml(str) {
   PARTNER_CONTEXT = readPartnerContext();
 
   if (!PARTNER_CONTEXT.agency) { showNoLinkError(); return; }
+
+  // Prefer the sitewide jr_lang setting so language persists across pages
+  const jrLang = localStorage.getItem("jr_lang");
+  const TR_LANGS = ["en", "zh", "ms", "ta", "hi", "bn"];
+  if (jrLang && TR_LANGS.includes(jrLang) && TR[jrLang]) lang = jrLang;
 
   restoreDraft();
   if (currentStep < 0 || currentStep > getSteps().length) currentStep = 0;

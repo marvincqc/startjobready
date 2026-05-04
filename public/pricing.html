@@ -6,6 +6,7 @@
 <title>Pricing — JobReady</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
+<script src="/lang.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root {
@@ -39,6 +40,8 @@ a { color: inherit; text-decoration: none; }
 .nav-links a.active { color: var(--ink); }
 .nav-cta { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 20px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 14px; font-weight: 700; transition: background 0.15s; white-space: nowrap; }
 .nav-cta:hover { background: var(--brand-dark); }
+.jr-lang-sel { font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); background: transparent; border: none; cursor: pointer; outline: none; }
+.jr-lang-sel:hover { color: var(--ink); }
 
 /* Hero */
 .hero { padding: 80px 0 48px; text-align: center; }
@@ -127,21 +130,22 @@ a { color: inherit; text-decoration: none; }
         <span class="nav-name">JobReady</span>
       </a>
       <div class="nav-links">
-        <a href="/#how-it-works">How it works</a>
-        <a href="/pricing" class="active">Pricing</a>
-        <a href="/#contact">Contact</a>
-        <a href="/login" id="signInLink">Agency sign in</a>
+        <a href="/#how-it-works" data-i18n="nav_how">How it works</a>
+        <a href="/pricing" class="active" data-i18n="nav_pricing">Pricing</a>
+        <a href="/#contact" data-i18n="nav_contact">Contact</a>
+        <a href="/login" id="signInLink" data-i18n="nav_sign_in">Agency sign in</a>
       </div>
-      <a class="nav-cta" id="navCta" href="/register">Try it free</a>
+      <div id="langSelContainer"></div>
+      <a class="nav-cta" id="navCta" href="/register" data-i18n="nav_try_free">Try it free</a>
     </div>
   </div>
 </nav>
 
 <section class="hero">
   <div class="shell">
-    <span class="eyebrow">Pricing</span>
-    <h1>Simple plans that grow with your agency.</h1>
-    <p>Start free. Upgrade when you're ready for more partner links and worker submissions. No setup fees, cancel anytime.</p>
+    <span class="eyebrow" data-i18n="pricing_eyebrow">Pricing</span>
+    <h1 data-i18n="pricing_h1">Simple plans that grow with your agency.</h1>
+    <p data-i18n="pricing_p">Start free. Upgrade when you're ready for more partner links and worker submissions. No setup fees, cancel anytime.</p>
   </div>
 </section>
 
@@ -151,48 +155,48 @@ a { color: inherit; text-decoration: none; }
 
       <!-- Free -->
       <div class="tier">
-        <div class="tier-name">Free</div>
-        <div class="tier-price">S$0 <small>/ forever</small></div>
-        <div class="tier-tag">For agencies just starting out and validating the workflow.</div>
+        <div class="tier-name" data-i18n="pricing_free_name">Free</div>
+        <div class="tier-price"><span data-i18n="pricing_free_price">S$0</span> <small data-i18n="pricing_free_per">/ forever</small></div>
+        <div class="tier-tag" data-i18n="pricing_free_tag">For agencies just starting out and validating the workflow.</div>
         <ul class="tier-features">
-          <li>3 active partner links</li>
-          <li>20 worker submissions / month</li>
-          <li>PDF resume downloads</li>
-          <li>Worker attachments</li>
-          <li>Google &amp; email login</li>
+          <li data-i18n="pricing_free_f1">3 active partner links</li>
+          <li data-i18n="pricing_free_f2">20 worker submissions / month</li>
+          <li data-i18n="pricing_free_f3">PDF resume downloads</li>
+          <li data-i18n="pricing_free_f4">Worker attachments</li>
+          <li data-i18n="pricing_free_f5">Google &amp; email login</li>
         </ul>
-        <a class="tier-cta outline" id="freeCta" href="/register">Get started free</a>
+        <a class="tier-cta outline" id="freeCta" href="/register" data-i18n="pricing_free_cta">Get started free</a>
       </div>
 
       <!-- Pro -->
       <div class="tier featured">
-        <span class="tier-badge">Most popular</span>
-        <div class="tier-name">Pro</div>
-        <div class="tier-price">S$29 <small>/ month</small></div>
-        <div class="tier-tag">For active agencies running multiple sourcing partnerships.</div>
+        <span class="tier-badge" data-i18n="pricing_pro_badge">Most popular</span>
+        <div class="tier-name" data-i18n="pricing_pro_name">Pro</div>
+        <div class="tier-price"><span data-i18n="pricing_pro_price">S$29</span> <small data-i18n="pricing_pro_per">/ month</small></div>
+        <div class="tier-tag" data-i18n="pricing_pro_tag">For active agencies running multiple sourcing partnerships.</div>
         <ul class="tier-features">
-          <li>25 active partner links</li>
-          <li>500 worker submissions / month</li>
-          <li>PDF resume downloads</li>
-          <li>Worker attachments</li>
-          <li>Email support</li>
+          <li data-i18n="pricing_pro_f1">25 active partner links</li>
+          <li data-i18n="pricing_pro_f2">500 worker submissions / month</li>
+          <li data-i18n="pricing_pro_f3">PDF resume downloads</li>
+          <li data-i18n="pricing_pro_f4">Worker attachments</li>
+          <li data-i18n="pricing_pro_f5">Email support</li>
         </ul>
-        <a class="tier-cta primary" href="/#contact">Upgrade to Pro</a>
+        <a class="tier-cta primary" href="/#contact" data-i18n="pricing_pro_cta">Upgrade to Pro</a>
       </div>
 
       <!-- Scale -->
       <div class="tier">
-        <div class="tier-name">Scale</div>
-        <div class="tier-price">S$129 <small>/ month</small></div>
-        <div class="tier-tag">For high-volume agencies that need unlimited reach.</div>
+        <div class="tier-name" data-i18n="pricing_scale_name">Scale</div>
+        <div class="tier-price"><span data-i18n="pricing_scale_price">S$129</span> <small data-i18n="pricing_scale_per">/ month</small></div>
+        <div class="tier-tag" data-i18n="pricing_scale_tag">For high-volume agencies that need unlimited reach.</div>
         <ul class="tier-features">
-          <li>Unlimited partner links</li>
-          <li>Unlimited worker submissions</li>
-          <li>PDF resume downloads</li>
-          <li>Worker attachments</li>
-          <li>Priority support</li>
+          <li data-i18n="pricing_scale_f1">Unlimited partner links</li>
+          <li data-i18n="pricing_scale_f2">Unlimited worker submissions</li>
+          <li data-i18n="pricing_scale_f3">PDF resume downloads</li>
+          <li data-i18n="pricing_scale_f4">Worker attachments</li>
+          <li data-i18n="pricing_scale_f5">Priority support</li>
         </ul>
-        <a class="tier-cta outline" href="/#contact">Contact us</a>
+        <a class="tier-cta outline" href="/#contact" data-i18n="pricing_scale_cta">Contact us</a>
       </div>
 
     </div>
@@ -201,27 +205,27 @@ a { color: inherit; text-decoration: none; }
 
 <section class="faq">
   <div class="shell">
-    <h2>Frequently asked</h2>
+    <h2 data-i18n="pricing_faq_h">Frequently asked</h2>
     <div class="faq-grid">
       <div class="faq-item">
-        <div class="faq-q">When do submission limits reset?</div>
-        <div class="faq-a">On the first day of every calendar month (UTC). Limits are forward-looking — you start fresh each month.</div>
+        <div class="faq-q" data-i18n="pricing_faq1_q">When do submission limits reset?</div>
+        <div class="faq-a" data-i18n="pricing_faq1_a">On the first day of every calendar month (UTC). Limits are forward-looking — you start fresh each month.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">What counts as a "partner link"?</div>
-        <div class="faq-a">Each unique link you create for a sending partner or sourcing channel. Disable a link to free up a slot — only active links count toward your limit.</div>
+        <div class="faq-q" data-i18n="pricing_faq2_q">What counts as a "partner link"?</div>
+        <div class="faq-a" data-i18n="pricing_faq2_a">Each unique link you create for a sending partner or sourcing channel. Disable a link to free up a slot — only active links count toward your limit.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">What happens if I hit my limit?</div>
-        <div class="faq-a">Workers will see a friendly message asking them to reach out directly or try again next month. Your existing submissions and partner links stay accessible — only new submissions are paused until you upgrade or the month resets.</div>
+        <div class="faq-q" data-i18n="pricing_faq3_q">What happens if I hit my limit?</div>
+        <div class="faq-a" data-i18n="pricing_faq3_a">Workers will see a friendly message asking them to reach out directly or try again next month. Your existing submissions and partner links stay accessible — only new submissions are paused until you upgrade or the month resets.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">How do I upgrade?</div>
-        <div class="faq-a"><a href="/#contact" style="color:var(--brand);font-weight:700;">Send us a message</a> with your agency name and the plan you're interested in. We'll get back to you within 2 business days and walk you through the next steps.</div>
+        <div class="faq-q" data-i18n="pricing_faq4_q">How do I upgrade?</div>
+        <div class="faq-a"><a href="/#contact" style="color:var(--brand);font-weight:700;" data-i18n="pricing_faq4_a">Send us a message with your agency name and the plan you're interested in. We'll get back to you within 2 business days and walk you through the next steps.</a></div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Can I downgrade later?</div>
-        <div class="faq-a">Yes — drop us an email any time. Your data stays intact; only the limits change.</div>
+        <div class="faq-q" data-i18n="pricing_faq5_q">Can I downgrade later?</div>
+        <div class="faq-a" data-i18n="pricing_faq5_a">Yes — drop us an email any time. Your data stays intact; only the limits change.</div>
       </div>
     </div>
   </div>
@@ -235,24 +239,27 @@ a { color: inherit; text-decoration: none; }
         <span class="nav-name">JobReady</span>
       </div>
       <nav class="footer-links">
-        <a href="/#how-it-works">How it works</a>
-        <a href="/pricing">Pricing</a>
-        <a href="/login" id="footerSignInLink">Agency sign in</a>
-        <a href="/privacy">Privacy</a>
+        <a href="/#how-it-works" data-i18n="nav_how">How it works</a>
+        <a href="/pricing" data-i18n="nav_pricing">Pricing</a>
+        <a href="/login" id="footerSignInLink" data-i18n="nav_sign_in">Agency sign in</a>
+        <a href="/privacy" data-i18n="footer_privacy">Privacy</a>
       </nav>
-      <span class="footer-meta">© 2026 JobReady · Singapore</span>
+      <span class="footer-meta" data-i18n="footer_meta">© 2026 JobReady · Singapore</span>
     </div>
   </div>
 </footer>
 
 <script>
+document.getElementById("langSelContainer").innerHTML = buildLangSelector();
+applyLang();
+
 const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 sb.auth.getSession().then(({ data: { session } }) => {
   if (!session) return;
   const navCta = document.getElementById("navCta");
-  if (navCta) { navCta.textContent = "Dashboard"; navCta.href = "/dashboard"; }
+  if (navCta) { navCta.textContent = T("nav_dashboard"); navCta.href = "/dashboard"; }
   const freeCta = document.getElementById("freeCta");
-  if (freeCta) { freeCta.textContent = "Go to dashboard"; freeCta.href = "/dashboard"; }
+  if (freeCta) { freeCta.textContent = T("nav_dashboard"); freeCta.href = "/dashboard"; }
   const signInLink = document.getElementById("signInLink");
   if (signInLink) signInLink.style.display = "none";
   const footerSignInLink = document.getElementById("footerSignInLink");

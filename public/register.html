@@ -6,6 +6,7 @@
 <title>Register your agency — JobReady</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="/config.js"></script>
+<script src="/lang.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 
@@ -35,6 +36,8 @@ a { color: inherit; text-decoration: none; }
 .nav-name { font-size: 17px; font-weight: 800; letter-spacing: -0.03em; }
 .nav-login { font-size: 14px; font-weight: 600; color: var(--muted); }
 .nav-login:hover { color: var(--ink); }
+.jr-lang-sel { font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); background: transparent; border: none; cursor: pointer; outline: none; }
+.jr-lang-sel:hover { color: var(--ink); }
 
 /* ── MAIN ────────────────────────────────────────────────────── */
 main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
@@ -121,7 +124,10 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
         <span class="nav-mark">JR</span>
         <span class="nav-name">JobReady</span>
       </a>
-      <a class="nav-login" href="/login">Sign in</a>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div id="langSelContainer"></div>
+        <a class="nav-login" href="/login" data-i18n="login_h1">Sign in</a>
+      </div>
     </div>
   </div>
 </nav>
@@ -129,46 +135,49 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
 <main>
   <div class="shell">
     <div class="card">
-      <div class="card-eyebrow">Agency Portal</div>
-      <h1>Set up your agency account</h1>
-      <p class="card-sub">Create your free account to start sending workers their application link.</p>
+      <div class="card-eyebrow" data-i18n="reg_eyebrow">Agency Portal</div>
+      <h1 data-i18n="reg_h1">Set up your agency account</h1>
+      <p class="card-sub" data-i18n="reg_sub">Create your free account to start sending workers their application link.</p>
 
       <button class="btn-google" id="googleBtn" type="button">
         <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2a10.34 10.34 0 0 0-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.83.86-3.04.86-2.34 0-4.32-1.58-5.02-3.7H.96v2.34A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.98 10.72A5.41 5.41 0 0 1 3.7 9c0-.6.1-1.18.28-1.72V4.94H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.06l3.02-2.34z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.34l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.94L3.98 7.28C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
-        Continue with Google
+        <span data-i18n="reg_google">Continue with Google</span>
       </button>
 
       <div id="registerMsg" style="margin-top:14px;"></div>
 
-      <div class="card-footer">Already have an account? <a href="/login">Sign in</a></div>
+      <div class="card-footer"><span data-i18n="reg_footer">Already have an account?</span> <a href="/login" data-i18n="reg_login_link">Sign in</a></div>
     </div>
   </div>
 
   <!-- Step 2: Agency profile modal (shown after Google sign-in) -->
   <div id="step2" class="profile-overlay">
     <div class="profile-modal">
-      <div class="card-eyebrow">Agency Setup</div>
-      <h1 style="font-family:'Fraunces',serif;font-size:28px;letter-spacing:-0.03em;line-height:1.1;margin-bottom:8px;">Set up your agency</h1>
-      <p style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;">You're signed in. Just fill in your agency details to finish.</p>
+      <div class="card-eyebrow" data-i18n="reg_modal_eyebrow">Agency Setup</div>
+      <h1 style="font-family:'Fraunces',serif;font-size:28px;letter-spacing:-0.03em;line-height:1.1;margin-bottom:8px;" data-i18n="reg_modal_h1">Set up your agency</h1>
+      <p style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;" data-i18n="reg_modal_sub">You're signed in. Just fill in your agency details to finish.</p>
       <form id="profileForm">
         <div class="form-group">
-          <label for="agencyName2">Agency name</label>
-          <input type="text" id="agencyName2" placeholder="e.g. Apex Manpower" required autocomplete="organization">
+          <label for="agencyName2" data-i18n="reg_name_label">Agency name</label>
+          <input type="text" id="agencyName2" data-i18n-ph="reg_name_ph" placeholder="e.g. Apex Manpower" required autocomplete="organization">
         </div>
         <div class="form-group">
-          <label for="agencySlug2">Your short code</label>
-          <input type="text" id="agencySlug2" placeholder="e.g. apex" maxlength="24" required autocomplete="off">
+          <label for="agencySlug2" data-i18n="reg_slug_label">Your short code</label>
+          <input type="text" id="agencySlug2" data-i18n-ph="reg_slug_ph" placeholder="e.g. apex" maxlength="24" required autocomplete="off">
           <div class="slug-preview" id="slugPreview2">Your worker link will be: <strong>jobready.sg/apply/apex-…</strong></div>
-          <div class="field-hint">Letters, numbers and hyphens only. Cannot be changed later.</div>
+          <div class="field-hint" data-i18n="reg_slug_hint">Letters, numbers and hyphens only. Cannot be changed later.</div>
         </div>
         <div id="profileMsg"></div>
-        <button type="submit" class="btn-submit" id="profileSubmitBtn">Finish setup</button>
+        <button type="submit" class="btn-submit" id="profileSubmitBtn" data-i18n="reg_submit">Finish setup</button>
       </form>
     </div>
   </div>
 </main>
 
 <script>
+document.getElementById("langSelContainer").innerHTML = buildLangSelector();
+applyLang();
+
 (function () {
   const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
@@ -221,9 +230,9 @@ main { flex: 1; display: flex; align-items: center; padding: 48px 0; }
         const slug = slugify(document.getElementById("agencySlug2").value);
         if (!name || !slug) return showMsg("profileMsg", "Please fill in all fields.", "error");
         const btn = document.getElementById("profileSubmitBtn");
-        btn.disabled = true; btn.textContent = "Saving…";
+        btn.disabled = true; btn.textContent = T("reg_saving");
         await setupAgency(session.access_token, name, slug, "profileMsg");
-        btn.disabled = false; btn.textContent = "Finish setup";
+        btn.disabled = false; btn.textContent = T("reg_submit");
       });
     }
 
