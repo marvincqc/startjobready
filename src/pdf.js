@@ -7,12 +7,12 @@ const PDFDocument = require("pdfkit");
 const { PDFDocument: PdfLib } = require("pdf-lib");
 const { createClient } = require("@supabase/supabase-js");
 
-const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseUrl = process.env.SUPABASE_URL || "https://qpnkmqczvlmrxofqgzdu.supabase.co";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 if (!supabaseServiceKey) {
   console.error("[pdf] SUPABASE_SERVICE_KEY is not set — storage uploads will be disabled. Set this to the service_role key from Supabase → Project Settings → API.");
 }
-const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+const supabase = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 const STORAGE_BUCKET = "Resumes";
 const OUTPUT_ROOT = path.join(__dirname, "..", "resume_output");
