@@ -132,6 +132,14 @@ function cleanupTempDir(dir) {
   return fsp.rm(dir, { recursive: true, force: true }).catch(() => {});
 }
 
+function detectMime(buf) {
+  if (!buf || buf.length < 4) return null;
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return "image/jpeg";
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return "image/png";
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return "application/pdf";
+  return null;
+}
+
 async function writeUploadedFile(file, tempPath) {
   const source = typeof file?.stream === "function" ? Readable.fromWeb(file.stream()) : null;
   if (!source) {
@@ -810,27 +818,41 @@ app.post("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
 
     let nextIndex = manifest.attachments.length + 1;
     const added = [];
+    const rejected = [];
 
     for (const file of files) {
-      const ext = path.extname(file.name || "").toLowerCase();
-      const safeStem = sanitizeTempSegment(path.basename(file.name || "att", ext), "att");
-      const fileName = `${String(nextIndex).padStart(2, "0")}_${safeStem}${ext}`;
-      const storagePath = `${attachmentDir}/${fileName}`;
-      const tempPath = path.join(tempDir, fileName);
-
+      const tempPath = path.join(tempDir, `tmp_${nextIndex}`);
       await writeUploadedFile(file, tempPath);
       const fileBuffer = await fsp.readFile(tempPath);
 
+      // Detect actual format from magic bytes — don't trust browser MIME/extension
+      const detectedMime = detectMime(fileBuffer);
+      if (!detectedMime) {
+        rejected.push(`${file.name} (unsupported format — only PDF, JPEG, and PNG are accepted)`);
+        continue;
+      }
+
+      const ext = detectedMime === "application/pdf" ? ".pdf"
+                : detectedMime === "image/jpeg"      ? ".jpg"
+                :                                      ".png";
+      const safeStem = sanitizeTempSegment(path.basename(file.name || "att", path.extname(file.name || "")), "att");
+      const fileName = `${String(nextIndex).padStart(2, "0")}_${safeStem}${ext}`;
+      const storagePath = `${attachmentDir}/${fileName}`;
+
       const { error: uploadErr } = await supabase.storage
         .from("Resumes")
-        .upload(storagePath, fileBuffer, { contentType: file.type || "application/octet-stream", upsert: true });
+        .upload(storagePath, fileBuffer, { contentType: detectedMime, upsert: true });
       if (uploadErr) throw new Error(`Upload failed for ${file.name}: ${uploadErr.message}`);
 
-      const entry = { originalName: file.name, mimeType: file.type || "application/octet-stream", size: file.size || 0, storagePath };
+      const entry = { originalName: file.name, mimeType: detectedMime, size: fileBuffer.length, storagePath };
       manifest.attachments.push(entry);
       added.push(entry);
       nextIndex++;
-      console.log(`[att-upload] ${file.name} → ${storagePath}`);
+      console.log(`[att-upload] ${file.name} (${detectedMime}) → ${storagePath}`);
+    }
+
+    if (rejected.length && !added.length) {
+      return res.status(400).json({ ok: false, error: rejected.join("; ") });
     }
 
     // Re-upload manifest
@@ -847,7 +869,7 @@ app.post("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
     if (!isAdmin) countUpdate.eq("agency_id", agency.id);
     await countUpdate;
 
-    res.json({ ok: true, added: added.length, total: manifest.attachments.length });
+    res.json({ ok: true, added: added.length, total: manifest.attachments.length, rejected });
   } finally {
     await cleanupTempDir(tempDir);
   }

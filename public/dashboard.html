@@ -970,8 +970,11 @@ applyLang();
         const res = await fetch(`/api/submissions/${s.id}/attachments`, { method: "POST", headers: { Authorization: auth().Authorization }, body: fd });
         const json = await res.json();
         if (json.ok) {
-          msgEl.style.color = "var(--brand)";
-          msgEl.textContent = `${json.added} file${json.added > 1 ? "s" : ""} added (${json.total} total)`;
+          const rejMsg = json.rejected?.length ? ` (${json.rejected.length} rejected: wrong format)` : "";
+          msgEl.style.color = json.added > 0 ? "var(--brand)" : "#c53030";
+          msgEl.textContent = json.added > 0
+            ? `${json.added} file${json.added > 1 ? "s" : ""} added (${json.total} total)${rejMsg}`
+            : `No files added${rejMsg}`;
           s.attachment_count = json.total;
           // Update drawer detail count
           const countEl = document.getElementById("drawerAttCount");

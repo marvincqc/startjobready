@@ -510,8 +510,11 @@ tr:hover td { background: #fafaf9; }
         const res = await fetch(`/api/submissions/${s.id}/attachments`, { method: "POST", headers: auth(), body: fd });
         const json = await res.json();
         if (json.ok) {
-          msgEl.style.color = "var(--brand, #c85e38)";
-          msgEl.textContent = `${json.added} file${json.added > 1 ? "s" : ""} added (${json.total} total)`;
+          const rejMsg = json.rejected?.length ? ` (${json.rejected.length} rejected: wrong format)` : "";
+          msgEl.style.color = json.added > 0 ? "var(--brand, #c85e38)" : "#c53030";
+          msgEl.textContent = json.added > 0
+            ? `${json.added} file${json.added > 1 ? "s" : ""} added (${json.total} total)${rejMsg}`
+            : `No files added${rejMsg}`;
           s.attachment_count = json.total;
           const countEl = document.getElementById("drawerAttCount");
           if (countEl) countEl.textContent = json.total;
