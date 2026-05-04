@@ -132,11 +132,16 @@ function cleanupTempDir(dir) {
   return fsp.rm(dir, { recursive: true, force: true }).catch(() => {});
 }
 
-function detectMime(buf) {
+async function detectMime(buf) {
   if (!buf || buf.length < 4) return null;
-  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return "image/jpeg";
-  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return "image/png";
+  // PDF
   if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return "application/pdf";
+  // Try sharp for any image format (JPEG, PNG, AVIF, HEIC, WebP, GIF, TIFF, BMP …)
+  try {
+    const sharp = require("sharp");
+    const meta = await sharp(buf).metadata();
+    if (meta.format) return `image/${meta.format}`;
+  } catch {}
   return null;
 }
 
@@ -373,8 +378,8 @@ app.get("/api/pdf/download", async (req, res) => {
         const attBuffers = [];
         for (const att of attEntries) {
           const mime = (att.mimeType || "").toLowerCase();
-          if (mime !== "application/pdf" && mime !== "image/jpeg" && mime !== "image/png" && mime !== "image/jpg") {
-            console.log(`[pdf-download] skipping unsupported mime: ${att.mimeType} (${att.originalName})`);
+          if (!mime.startsWith("image/") && mime !== "application/pdf") {
+            console.log(`[pdf-download] skipping non-image/pdf: ${att.mimeType} (${att.originalName})`);
             continue;
           }
           const { data: fileBlob, error: dlErr } = await supabase.storage
@@ -384,7 +389,7 @@ app.get("/api/pdf/download", async (req, res) => {
             continue;
           }
           const buf = Buffer.from(await fileBlob.arrayBuffer());
-          attBuffers.push({ name: att.originalName, mimeType: mime === "image/jpg" ? "image/jpeg" : mime, data: buf });
+          attBuffers.push({ name: att.originalName, mimeType: mime, data: buf });
         }
         if (attBuffers.length > 0) {
           console.log(`[pdf-download] merging ${attBuffers.length} attachment(s)`);
@@ -826,15 +831,14 @@ app.post("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
       const fileBuffer = await fsp.readFile(tempPath);
 
       // Detect actual format from magic bytes — don't trust browser MIME/extension
-      const detectedMime = detectMime(fileBuffer);
+      const detectedMime = await detectMime(fileBuffer);
       if (!detectedMime) {
         rejected.push(`${file.name} (unsupported format — only PDF, JPEG, and PNG are accepted)`);
         continue;
       }
 
-      const ext = detectedMime === "application/pdf" ? ".pdf"
-                : detectedMime === "image/jpeg"      ? ".jpg"
-                :                                      ".png";
+      const extMap = { "application/pdf": ".pdf", "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/avif": ".avif", "image/heif": ".heic", "image/gif": ".gif", "image/tiff": ".tiff" };
+      const ext = extMap[detectedMime] || ("." + (detectedMime.split("/")[1] || "bin"));
       const safeStem = sanitizeTempSegment(path.basename(file.name || "att", path.extname(file.name || "")), "att");
       const fileName = `${String(nextIndex).padStart(2, "0")}_${safeStem}${ext}`;
       const storagePath = `${attachmentDir}/${fileName}`;

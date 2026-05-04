@@ -1703,17 +1703,8 @@ function formatFileSize(bytes) {
 }
 
 function allowedAttachmentMime(file) {
-  const name = String(file?.name ?? "").toLowerCase();
   const mime = String(file?.type ?? "").toLowerCase();
-  return (
-    mime === "application/pdf" ||
-    mime === "image/jpeg" ||
-    mime === "image/png" ||
-    name.endsWith(".pdf") ||
-    name.endsWith(".jpg") ||
-    name.endsWith(".jpeg") ||
-    name.endsWith(".png")
-  );
+  return mime === "application/pdf" || mime.startsWith("image/");
 }
 
 function attachmentKey(file) {
@@ -1748,7 +1739,7 @@ async function addAttachments(fileList) {
 
   persistDraft();
   if (rejected.length) {
-    setStatusMessage(`"${rejected.slice(0,3).join('", "')}" could not be added — only PDF, JPG, and PNG files are accepted.`, "error");
+    setStatusMessage(`"${rejected.slice(0,3).join('", "')}" could not be added — only image files and PDFs are accepted.`, "error");
   }
   return added;
 }
@@ -1975,7 +1966,7 @@ function render() {
           ${attachments.length ? `<button class="upload-zone-btn" id="clearDocsBtn" type="button">Clear all</button>` : ""}
         </div>
         <div class="upload-note">Files stay in this browser tab until you submit. Refreshing clears them.</div>
-        <input type="file" id="attachmentInput" hidden multiple accept=".pdf,.jpg,.jpeg,.png" />
+        <input type="file" id="attachmentInput" hidden multiple accept="image/*,.pdf" />
       </div>
       <div class="attachment-list" id="attachmentList">
         ${filesHtml}
@@ -2703,7 +2694,7 @@ function buildCertListHtml(s) {
         <div class="upload-zone-actions">
           <button class="upload-zone-btn" type="button" onclick="event.stopPropagation();document.getElementById('certFileInput').click()">Choose file</button>
         </div>
-        <input type="file" id="certFileInput" hidden accept=".pdf,.jpg,.jpeg,.png">
+        <input type="file" id="certFileInput" hidden accept="image/*,.pdf">
       </div>
       <div id="certUploadErr" style="font-size:12px;color:#c53030;margin-top:6px;"></div>
       <div class="nav" style="margin-top:16px;">

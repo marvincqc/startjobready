@@ -5,6 +5,7 @@ const fsPromises = fs.promises;
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const { PDFDocument: PdfLib } = require("pdf-lib");
+const sharp = require("sharp");
 const { createClient } = require("@supabase/supabase-js");
 
 const supabaseUrl = process.env.SUPABASE_URL || "https://qpnkmqczvlmrxofqgzdu.supabase.co";
@@ -523,13 +524,10 @@ async function mergeAttachmentsIntoPDF(resumeBuffer, attachmentBuffers) {
         const attPdf = await PdfLib.load(att.data);
         const attPages = await merged.copyPages(attPdf, attPdf.getPageIndices());
         for (const page of attPages) merged.addPage(page);
-      } else if (mime === "image/jpeg" || mime === "image/jpg") {
-        const img = await merged.embedJpg(att.data);
-        const { width, height } = img.scale(1);
-        const page = merged.addPage([width, height]);
-        page.drawImage(img, { x: 0, y: 0, width, height });
-      } else if (mime === "image/png") {
-        const img = await merged.embedPng(att.data);
+      } else {
+        // Convert any image format (JPEG, PNG, AVIF, HEIC, WebP, GIF, TIFF …) to JPEG via sharp
+        const jpegBuf = await sharp(att.data).rotate().jpeg({ quality: 90 }).toBuffer();
+        const img = await merged.embedJpg(jpegBuf);
         const { width, height } = img.scale(1);
         const page = merged.addPage([width, height]);
         page.drawImage(img, { x: 0, y: 0, width, height });
