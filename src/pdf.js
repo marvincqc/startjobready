@@ -383,21 +383,17 @@ function buildPDF(d) {
       const dates = d[`job${n}Dates`];
       if (skip(title)) return;
 
-      const y = doc.y;
-      // Title left, dates right on same baseline
+      // Company + dates on first line
+      const companyLine = [company, dates].filter(v => !skip(v)).join("   ·   ");
+      if (companyLine) {
+        doc.fontSize(9.5).font("Helvetica").fillColor("#555555")
+           .text(companyLine, { width: W });
+        doc.moveDown(0.15);
+      }
+      // Designation (title) below, bold
       doc.fontSize(10).font("Helvetica-Bold").fillColor("#111111")
-         .text(title, L, y, { width: W - 140, lineBreak: false });
-      if (!skip(dates)) {
-        doc.fontSize(9.5).font("Helvetica").fillColor("#666666")
-           .text(dates, L, y, { width: W, align: "right", lineBreak: false });
-      }
-      doc.moveDown(0.3);
-      if (!skip(company)) {
-        doc.fontSize(9.5).font("Helvetica-Oblique").fillColor("#555555")
-           .text(company, { width: W });
-        doc.moveDown(0.2);
-      }
-      doc.moveDown(0.25);
+         .text(title, { width: W });
+      doc.moveDown(0.4);
     }
 
     // ── Personal Details ──────────────────────────────────────────
