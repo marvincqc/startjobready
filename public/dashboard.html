@@ -349,6 +349,16 @@ a { color: inherit; text-decoration: none; }
   border: 1.5px solid #fed7d7; cursor: pointer; margin-top: 8px; transition: background 0.15s, border-color 0.15s;
 }
 .btn-delete-sub:hover { background: #fff5f5; border-color: #fc8181; }
+.btn-add-att {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 40px; border-radius: 999px;
+  background: transparent; color: var(--brand);
+  font-family: "Plus Jakarta Sans", sans-serif; font-size: 13px; font-weight: 700;
+  border: 1.5px solid rgba(200,94,56,0.3); cursor: pointer; margin-top: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-add-att:hover { background: rgba(200,94,56,0.06); border-color: var(--brand); }
+.btn-add-att:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── LOADING SPINNER ─────────────────────────────────────────── */
 .spinner { width: 20px; height: 20px; border: 2.5px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 32px auto; }
@@ -926,6 +936,14 @@ applyLang();
         </button>
       </div>` : ""}
       <div class="drawer-section">
+        <input type="file" id="attFileInput" hidden multiple accept=".pdf,.jpg,.jpeg,.png">
+        <button class="btn-add-att" id="addAttBtn" onclick="document.getElementById('attFileInput').click()">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Add attachment
+        </button>
+        <div id="attUploadMsg" style="font-size:12px;margin-top:6px;"></div>
+      </div>
+      <div class="drawer-section">
         <button class="btn-edit-sub" id="editSubBtn">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
           ${esc(T("dash_edit_sub"))}
@@ -937,6 +955,44 @@ applyLang();
       </div>
     `;
     document.getElementById("editSubBtn").addEventListener("click", () => renderDrawerEdit(s, pdfUrl, body));
+
+    document.getElementById("attFileInput").addEventListener("change", async (e) => {
+      const files = e.target.files;
+      if (!files || !files.length) return;
+      const btn = document.getElementById("addAttBtn");
+      const msgEl = document.getElementById("attUploadMsg");
+      btn.disabled = true;
+      btn.textContent = `Uploading ${files.length} file${files.length > 1 ? "s" : ""}…`;
+      msgEl.textContent = "";
+      try {
+        const fd = new FormData();
+        for (const f of files) fd.append("attachments", f, f.name);
+        const res = await fetch(`/api/submissions/${s.id}/attachments`, { method: "POST", headers: { Authorization: auth().Authorization }, body: fd });
+        const json = await res.json();
+        if (json.ok) {
+          msgEl.style.color = "var(--brand)";
+          msgEl.textContent = `${json.added} file${json.added > 1 ? "s" : ""} added (${json.total} total)`;
+          s.attachment_count = json.total;
+          // Update the count shown in the details row
+          const countEl = document.querySelector(".drawer-field-val:last-of-type");
+          document.querySelectorAll(".drawer-field").forEach(el => {
+            if (el.querySelector(".drawer-field-key")?.textContent === T("dash_attachments")) {
+              el.querySelector(".drawer-field-val").textContent = json.total;
+            }
+          });
+        } else {
+          msgEl.style.color = "#c53030";
+          msgEl.textContent = json.error || "Upload failed.";
+        }
+      } catch {
+        msgEl.style.color = "#c53030";
+        msgEl.textContent = "Network error.";
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Add attachment`;
+        e.target.value = "";
+      }
+    });
   }
 
   function renderDrawerEdit(s, pdfUrl, body) {

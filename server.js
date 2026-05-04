@@ -766,6 +766,85 @@ app.delete("/api/submissions/:id", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── Add attachments to an existing submission ───────────────────────────────
+app.post("/api/submissions/:id/attachments", requireAuth, async (req, res) => {
+  const { data: agency } = await supabase
+    .from("agencies").select("id").eq("auth_id", req.user.id).maybeSingle();
+  if (!agency) return res.status(403).json({ ok: false, error: "Forbidden" });
+
+  const { data: sub } = await supabase
+    .from("submissions")
+    .select("pdf_path, attachment_count")
+    .eq("id", req.params.id)
+    .eq("agency_id", agency.id)
+    .maybeSingle();
+  if (!sub) return res.status(404).json({ ok: false, error: "Submission not found" });
+  if (!sub.pdf_path) return res.status(400).json({ ok: false, error: "Submission has no storage path." });
+
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "jobready-att-"));
+  try {
+    const request = new Request(
+      new URL(req.originalUrl || req.url, "http://127.0.0.1").toString(),
+      { method: req.method, headers: req.headers, body: req, duplex: "half" }
+    );
+    const formData = await request.formData();
+    const files = formData.getAll("attachments").filter(f => f && typeof f.stream === "function");
+    if (!files.length) return res.status(400).json({ ok: false, error: "No files provided." });
+
+    // Download existing manifest (or start fresh)
+    const manifestPath = sub.pdf_path.replace(/\/resume\.pdf$/, "/submission.json");
+    const attachmentDir = sub.pdf_path.replace(/\/resume\.pdf$/, "/attachments");
+    let manifest = { attachments: [] };
+    const { data: manifestBlob } = await supabase.storage.from("Resumes").download(manifestPath);
+    if (manifestBlob) {
+      try { manifest = JSON.parse(await manifestBlob.text()); } catch {}
+    }
+    if (!Array.isArray(manifest.attachments)) manifest.attachments = [];
+
+    let nextIndex = manifest.attachments.length + 1;
+    const added = [];
+
+    for (const file of files) {
+      const ext = path.extname(file.name || "").toLowerCase();
+      const safeStem = sanitizeTempSegment(path.basename(file.name || "att", ext), "att");
+      const fileName = `${String(nextIndex).padStart(2, "0")}_${safeStem}${ext}`;
+      const storagePath = `${attachmentDir}/${fileName}`;
+      const tempPath = path.join(tempDir, fileName);
+
+      await writeUploadedFile(file, tempPath);
+      const fileBuffer = await fsp.readFile(tempPath);
+
+      const { error: uploadErr } = await supabase.storage
+        .from("Resumes")
+        .upload(storagePath, fileBuffer, { contentType: file.type || "application/octet-stream", upsert: true });
+      if (uploadErr) throw new Error(`Upload failed for ${file.name}: ${uploadErr.message}`);
+
+      const entry = { originalName: file.name, mimeType: file.type || "application/octet-stream", size: file.size || 0, storagePath };
+      manifest.attachments.push(entry);
+      added.push(entry);
+      nextIndex++;
+      console.log(`[att-upload] ${file.name} → ${storagePath}`);
+    }
+
+    // Re-upload manifest
+    await supabase.storage.from("Resumes").upload(
+      manifestPath,
+      Buffer.from(JSON.stringify(manifest, null, 2), "utf8"),
+      { contentType: "application/json", upsert: true }
+    );
+
+    // Update attachment count in DB
+    await supabase.from("submissions")
+      .update({ attachment_count: manifest.attachments.length })
+      .eq("id", req.params.id)
+      .eq("agency_id", agency.id);
+
+    res.json({ ok: true, added: added.length, total: manifest.attachments.length });
+  } finally {
+    await cleanupTempDir(tempDir);
+  }
+});
+
 // Passport OCR was moved to the browser. Keep this route non-fatal for stale clients.
 app.all("/ocr-passport", (_req, res) => {
   res.status(410).json({
