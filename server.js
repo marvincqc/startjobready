@@ -936,6 +936,23 @@ app.get("/api/admin/submissions/:id", requireAuth, requireAdmin, async (req, res
   res.json({ ok: true, submission: data });
 });
 
+app.patch("/api/admin/submissions/:id", requireAuth, requireAdmin, async (req, res) => {
+  const allowed = ["worker_name", "nationality", "job_type", "data"];
+  const updates = {};
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
+  if (!Object.keys(updates).length) return res.status(400).json({ ok: false, error: "Nothing to update." });
+
+  const { error } = await supabase
+    .from("submissions")
+    .update(updates)
+    .eq("id", req.params.id);
+
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  res.json({ ok: true });
+});
+
 app.delete("/api/admin/submissions/:id", requireAuth, requireAdmin, async (req, res) => {
   const { error } = await supabase.from("submissions").delete().eq("id", req.params.id);
   if (error) return res.status(500).json({ ok: false, error: error.message });

@@ -115,6 +115,16 @@ tr:hover td { background: #fafaf9; }
 .drawer-data { font-size: 12px; background: var(--bg); border-radius: 10px; padding: 12px; overflow-x: auto; white-space: pre-wrap; line-height: 1.6; color: #32414f; max-height: 260px; overflow-y: auto; }
 .btn-download { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--ink); color: #fff; border-radius: 999px; font-size: 13px; font-weight: 700; }
 .btn-download:hover { background: #1c3447; }
+.btn-edit-sub { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; border-radius: 999px; background: transparent; color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid var(--line); cursor: pointer; margin-top: 8px; transition: border-color 0.15s; }
+.btn-edit-sub:hover { border-color: var(--ink); }
+.btn-save-sub { display: flex; align-items: center; justify-content: center; width: 100%; height: 44px; border-radius: 999px; background: var(--brand); color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
+.btn-save-sub:hover { background: #a34526; }
+.btn-save-sub:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cancel-edit { display: flex; align-items: center; justify-content: center; width: 100%; height: 40px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+.drawer-edit-field { display: grid; gap: 5px; margin-bottom: 12px; }
+.drawer-edit-field label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.drawer-edit-field input, .drawer-edit-field select { width: 100%; height: 40px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--bg); outline: none; transition: border-color 0.15s; }
+.drawer-edit-field input:focus, .drawer-edit-field select:focus { border-color: var(--brand); background: #fff; }
 .sub-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.1s; }
 .sub-row:last-child { border-bottom: none; }
 .sub-row:hover { background: #fafaf9; }
@@ -426,25 +436,24 @@ tr:hover td { background: #fafaf9; }
     const json = await res.json();
     if (!json.ok) { body.innerHTML = `<p style="color:var(--danger)">${esc(json.error)}</p>`; return; }
 
-    const s    = json.submission;
-    const name = s.worker_name || "Unknown";
-    document.getElementById("drawerName").textContent = name;
-
-    const agencyName = agencyNameMap[s.agency_id] || "—";
-    const date = new Date(s.created_at).toLocaleString("en-SG");
-    const fields = [
-      { k: "Agency",       v: agencyName },
-      { k: "Nationality",  v: s.nationality },
-      { k: "Job type",     v: s.job_type },
-      { k: "Submitted",    v: date },
-      { k: "Attachments",  v: s.attachment_count || 0 },
-    ];
-
+    const s = json.submission;
+    document.getElementById("drawerName").textContent = s.worker_name || "Unknown";
     const pdfUrl = s.pdf_path
       ? `/api/pdf/download?id=${encodeURIComponent(s.id)}&token=${encodeURIComponent(token)}`
       : null;
+    renderDrawerView(s, pdfUrl, body);
+  }
 
-    // Build readable field list from submission data object
+  function renderDrawerView(s, pdfUrl, body) {
+    const agencyName = agencyNameMap[s.agency_id] || "—";
+    const date = new Date(s.created_at).toLocaleString("en-SG");
+    const fields = [
+      { k: "Agency",      v: agencyName },
+      { k: "Nationality", v: s.nationality },
+      { k: "Job type",    v: s.job_type },
+      { k: "Submitted",   v: date },
+      { k: "Attachments", v: s.attachment_count || 0 },
+    ];
     const dataFields = s.data ? Object.entries(s.data)
       .filter(([, v]) => v !== null && v !== undefined && v !== "")
       .map(([k, v]) => `<div class="drawer-field"><div class="drawer-field-key">${esc(k)}</div><div class="drawer-field-val">${esc(String(v))}</div></div>`)
@@ -469,7 +478,150 @@ tr:hover td { background: #fafaf9; }
           Download resume PDF
         </a>
       </div>` : ""}
+      <div class="drawer-section">
+        <button class="btn-edit-sub" id="editSubBtn">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Edit submission
+        </button>
+      </div>
     `;
+    document.getElementById("editSubBtn").addEventListener("click", () => renderDrawerEdit(s, pdfUrl, body));
+  }
+
+  function renderDrawerEdit(s, pdfUrl, body) {
+    const FIELD_LABELS = {
+      name:"Full name", dob:"Date of birth", nationality:"Nationality",
+      country:"Country", city:"City", phone:"Phone", email:"Email",
+      jobType:"Job type", workArrange:"Work arrangement", availability:"Availability",
+      salary:"Expected salary (SGD)", experience:"Experience",
+      job1Title:"Job 1 title", job1Company:"Job 1 company", job1Dates:"Job 1 dates",
+      job2Title:"Job 2 title", job2Company:"Job 2 company", job2Dates:"Job 2 dates",
+      job3Title:"Job 3 title", job3Company:"Job 3 company", job3Dates:"Job 3 dates",
+      skills:"Skills", certs:"Certifications", education:"Education",
+      languages:"Languages", notes:"Additional notes",
+    };
+    const SELECT_OPTS = {
+      nationality: ["🇸🇬 Singaporean","🇲🇾 Malaysian","🇨🇳 Chinese","🇧🇩 Bangladeshi","🇮🇳 Indian","🇱🇰 Sri Lankan","🇹🇭 Thai","🇲🇲 Myanmarese","🇵🇭 Filipino","🇮🇩 Indonesian","🇺🇸 American","🇬🇧 British","🇦🇺 Australian","🌍 Other"],
+      country:     ["🇲🇾 Malaysia","🇨🇳 China","🇧🇩 Bangladesh","🇮🇳 India","🇱🇰 Sri Lanka","🇹🇭 Thailand","🇲🇲 Myanmar","🇵🇭 Philippines","🇮🇩 Indonesia","🇸🇬 Singapore","🇺🇸 United States","🇬🇧 United Kingdom","🇦🇺 Australia","🌍 Other"],
+      workArrange: ["Full-time","Part-time","Shift work"],
+      availability:["Immediately","Within 1 week","Within 1 month"],
+      experience:  ["No experience","< 1 year","1–3 years","3–5 years","5–10 years","10+ years"],
+      education:   ["No formal education","Primary school","Secondary school","Vocational / ITE","Diploma","Degree or higher"],
+    };
+    const MULTI_OPTS = {
+      jobType:   ["Construction","Cleaning","Delivery / Logistics","Security","Warehouse","F&B / Kitchen","Manufacturing","Other"],
+      languages: ["English","Mandarin","Malay","Tamil","Hindi","Bengali"],
+    };
+    const DATA_KEYS = ["dob","country","city","phone","email","workArrange","availability",
+      "salary","experience","job1Title","job1Company","job1Dates",
+      "job2Title","job2Company","job2Dates","job3Title","job3Company","job3Dates",
+      "skills","certs","education","languages","notes"];
+
+    const data = s.data || {};
+
+    function renderField(labelKey, attrName, attrValue, value) {
+      const label = esc(FIELD_LABELS[labelKey] || labelKey);
+      if (SELECT_OPTS[labelKey]) {
+        const opts = SELECT_OPTS[labelKey].map(o =>
+          `<option value="${esc(o)}"${value === o ? " selected" : ""}>${esc(o)}</option>`
+        ).join("");
+        return `<div class="drawer-edit-field"><label>${label}</label>
+          <select ${attrName}="${esc(attrValue)}"><option value="">— Select —</option>${opts}</select>
+        </div>`;
+      }
+      if (MULTI_OPTS[labelKey]) {
+        const selected = String(value || "").split(",").map(v => v.trim()).filter(Boolean);
+        const multiAttr = attrName === "data-edit" ? "data-multi" : "data-multi-data";
+        const checks = MULTI_OPTS[labelKey].map(o =>
+          `<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;cursor:pointer;">
+            <input type="checkbox" ${multiAttr}="${esc(attrValue)}" value="${esc(o)}"${selected.includes(o) ? " checked" : ""} style="width:15px;height:15px;accent-color:var(--brand);flex-shrink:0;">
+            ${esc(o)}</label>`
+        ).join("");
+        return `<div class="drawer-edit-field"><label>${label}</label>
+          <div style="display:grid;gap:8px;padding:6px 0;">${checks}</div>
+        </div>`;
+      }
+      return `<div class="drawer-edit-field"><label>${label}</label>
+        <input type="text" ${attrName}="${esc(attrValue)}" value="${esc(String(value ?? ""))}">
+      </div>`;
+    }
+
+    const fieldsHtml =
+      renderField("name",       "data-edit",     "worker_name", s.worker_name || "") +
+      renderField("nationality","data-edit",      "nationality", s.nationality || "") +
+      renderField("jobType",    "data-edit",      "job_type",    s.job_type || "") +
+      DATA_KEYS.map(k => renderField(k, "data-edit-data", k, data[k] ?? "")).join("");
+
+    body.innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-label">Edit submission</div>
+        ${fieldsHtml}
+      </div>
+      <div id="editSubMsg"></div>
+      <div class="drawer-section">
+        <button class="btn-save-sub" id="saveSubBtn">Save changes</button>
+        <button class="btn-cancel-edit" id="cancelSubBtn">Cancel</button>
+      </div>
+    `;
+
+    document.getElementById("cancelSubBtn").addEventListener("click", () => {
+      document.getElementById("drawerName").textContent = s.worker_name || "Unknown";
+      renderDrawerView(s, pdfUrl, body);
+    });
+
+    document.getElementById("saveSubBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("saveSubBtn");
+      const msgEl = document.getElementById("editSubMsg");
+      btn.disabled = true; btn.textContent = "Saving…";
+
+      const updates = {};
+      body.querySelectorAll("[data-edit]").forEach(el => { updates[el.dataset.edit] = el.value.trim(); });
+      const multiTopKeys = new Set(Array.from(body.querySelectorAll("[data-multi]")).map(el => el.dataset.multi));
+      multiTopKeys.forEach(k => {
+        updates[k] = Array.from(body.querySelectorAll(`[data-multi="${k}"]:checked`)).map(el => el.value).join(", ");
+      });
+
+      const newData = { ...data };
+      body.querySelectorAll("[data-edit-data]").forEach(el => { newData[el.dataset.editData] = el.value.trim(); });
+      const multiDataKeys = new Set(Array.from(body.querySelectorAll("[data-multi-data]")).map(el => el.dataset.multiData));
+      multiDataKeys.forEach(k => {
+        newData[k] = Array.from(body.querySelectorAll(`[data-multi-data="${k}"]:checked`)).map(el => el.value).join(", ");
+      });
+
+      if (updates.worker_name !== undefined) newData.name = updates.worker_name;
+      if (updates.nationality  !== undefined) newData.nationality = updates.nationality;
+      if (updates.job_type     !== undefined) newData.jobType = updates.job_type;
+      updates.data = newData;
+
+      const res = await fetch(`/api/admin/submissions/${encodeURIComponent(s.id)}`, {
+        method: "PATCH",
+        headers: { ...auth(), "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      const json = await res.json();
+      btn.disabled = false; btn.textContent = "Save changes";
+
+      if (!json.ok) {
+        msgEl.innerHTML = `<p style="color:var(--danger);font-size:13px;margin-bottom:12px;">${esc(json.error)}</p>`;
+        return;
+      }
+
+      // Update local object and re-render view
+      Object.assign(s, updates);
+      s.data = newData;
+      document.getElementById("drawerName").textContent = updates.worker_name || s.worker_name;
+
+      // Refresh the row in the list if visible
+      const row = document.getElementById("sub-row-" + s.id);
+      if (row) {
+        const nameEl = row.querySelector(".sub-name");
+        const metaEl = row.querySelector(".sub-meta");
+        if (nameEl) nameEl.textContent = updates.worker_name || s.worker_name;
+        if (metaEl) metaEl.textContent = `${updates.nationality || s.nationality || "—"} · ${updates.job_type || s.job_type || "—"}`;
+      }
+
+      renderDrawerView(s, pdfUrl, body);
+    });
   }
 
   document.getElementById("drawerClose").addEventListener("click", () => {
