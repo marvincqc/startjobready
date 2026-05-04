@@ -354,7 +354,7 @@ tr:hover td { background: #fafaf9; }
     btn.disabled = true;
 
     try {
-      const url = `/api/submissions?limit=50${cursor ? "&cursor=" + encodeURIComponent(cursor) : ""}`;
+      const url = `/api/admin/submissions?limit=50${cursor ? "&cursor=" + encodeURIComponent(cursor) : ""}`;
       const res = await fetch(url, { headers: auth() });
       const json = await res.json();
       const el = document.getElementById("submissionsContent");
@@ -422,7 +422,7 @@ tr:hover td { background: #fafaf9; }
     body.innerHTML = `<div class="spinner"></div>`;
     overlay.classList.add("open");
 
-    const res  = await fetch(`/api/submissions/${encodeURIComponent(id)}`, { headers: auth() });
+    const res  = await fetch(`/api/admin/submissions/${encodeURIComponent(id)}`, { headers: auth() });
     const json = await res.json();
     if (!json.ok) { body.innerHTML = `<p style="color:var(--danger)">${esc(json.error)}</p>`; return; }
 

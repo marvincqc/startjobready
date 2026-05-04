@@ -906,6 +906,36 @@ app.delete("/api/admin/agencies/:id", requireAuth, requireAdmin, async (req, res
   res.json({ ok: true });
 });
 
+app.get("/api/admin/submissions", requireAuth, requireAdmin, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+  const cursor = req.query.cursor || null;
+
+  let query = supabase
+    .from("submissions")
+    .select("id, worker_name, nationality, job_type, attachment_count, created_at, agency_id, partner_link_id")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (cursor) query = query.lt("created_at", cursor);
+
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+
+  const nextCursor = data.length === limit ? data[data.length - 1].created_at : null;
+  res.json({ ok: true, submissions: data, nextCursor });
+});
+
+app.get("/api/admin/submissions/:id", requireAuth, requireAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("*")
+    .eq("id", req.params.id)
+    .maybeSingle();
+  if (error) return res.status(500).json({ ok: false, error: error.message });
+  if (!data) return res.status(404).json({ ok: false, error: "Not found" });
+  res.json({ ok: true, submission: data });
+});
+
 app.delete("/api/admin/submissions/:id", requireAuth, requireAdmin, async (req, res) => {
   const { error } = await supabase.from("submissions").delete().eq("id", req.params.id);
   if (error) return res.status(500).json({ ok: false, error: error.message });
